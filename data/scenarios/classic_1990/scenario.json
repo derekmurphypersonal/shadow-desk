@@ -1,0 +1,22 @@
+{
+ "id": "classic_1990",
+ "name": "1990 Classic",
+ "description": "June 1990. The Berlin Wall is down, the Soviet Union is wobbling, and Iraqi divisions are massing near Kuwait. The original game's starting point.",
+ "start": {"year": 1990, "month": 6},
+ "first_election_in_months": 29,
+ "cost_scale": 1.0,
+ "systems": [],
+ "blocs": {
+  "west": {"name": "Western alliance", "leader": "USA", "baseline": 55},
+  "warsaw": {"name": "Soviet bloc", "leader": "SUN", "baseline": -30},
+  "nonaligned": {"name": "Non-aligned", "leader": "", "baseline": 5}
+ },
+ "us": {
+  "approval": 62, "political_capital": 50, "congress": 52,
+  "budget": {"defense": 300, "intel": 30, "aid": 15, "domestic": 180},
+  "deficit_pct_baseline": 3.8,
+  "gdp": 5960
+ },
+ "wars": [],
+ "agendas": ["peacemaker", "humanitarian", "democratiser", "hegemon"]
+}

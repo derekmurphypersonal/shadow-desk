@@ -1,0 +1,1938 @@
+[
+ {
+  "id": "kuwait_buildup",
+  "when": {
+   "date": "1990-07"
+  },
+  "title": "Iraqi divisions mass on the Kuwaiti border",
+  "text": "Satellite imagery shows armour and Republican Guard units moving south toward Kuwait. Baghdad accuses Kuwait of slant-drilling and flooding the oil market.",
+  "choices": [
+   {
+    "label": "Issue a firm private warning to Baghdad (5 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -5
+     ],
+     [
+      "chance",
+      0.35,
+      [
+       [
+        "set",
+        "IRQ",
+        "ambition",
+        60
+       ],
+       [
+        "log",
+        "Baghdad pulls back some units after the warning."
+       ]
+      ],
+      [
+       [
+        "log",
+        "Baghdad shrugs off the warning."
+       ]
+      ]
+     ]
+    ],
+    "advisors": {
+     "state": 3,
+     "nsa": 2
+    }
+   },
+   {
+    "label": "Pre-position forces in Saudi Arabia (10 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -10
+     ],
+     [
+      "deploy",
+      "SAU"
+     ],
+     [
+      "add",
+      "SAU",
+      "relation",
+      8
+     ]
+    ],
+    "advisors": {
+     "defense": 4,
+     "nsa": 3,
+     "un": -1
+    }
+   },
+   {
+    "label": "Treat it as a regional dispute",
+    "effects": [],
+    "advisors": {
+     "treasury": 1,
+     "nsa": -4,
+     "defense": -2
+    }
+   }
+  ],
+  "speaker": "nsa"
+ },
+ {
+  "id": "kuwait_invasion",
+  "when": {
+   "date": "1990-08",
+   "if": [
+    [
+     "stat",
+     "IRQ",
+     "ambition",
+     ">",
+     70
+    ]
+   ]
+  },
+  "title": "Iraq invades Kuwait",
+  "text": "Iraqi forces have crossed the border in strength. Kuwait's army is collapsing. The UN Security Council is meeting in emergency session.",
+  "effects": [
+   [
+    "war",
+    "IRQ",
+    "KWT",
+    55
+   ],
+   [
+    "add",
+    "SAU",
+    "stability",
+    -5
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Build a UN-backed coalition (15 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -15
+     ],
+     [
+      "us",
+      "approval",
+      4
+     ],
+     [
+      "add",
+      "IRQ",
+      "relation",
+      -30
+     ],
+     [
+      "sanction",
+      "IRQ"
+     ]
+    ],
+    "advisors": {
+     "un": 6,
+     "state": 4
+    }
+   },
+   {
+    "label": "Deploy US forces to defend Saudi Arabia",
+    "effects": [
+     [
+      "deploy",
+      "SAU"
+     ],
+     [
+      "us",
+      "approval",
+      3
+     ]
+    ],
+    "advisors": {
+     "defense": 4,
+     "nsa": 3
+    }
+   },
+   {
+    "label": "Condemn, but stay out",
+    "effects": [
+     [
+      "us",
+      "approval",
+      -6
+     ]
+    ],
+    "advisors": {
+     "nsa": -6,
+     "defense": -4,
+     "chief": 1
+    }
+   }
+  ],
+  "speaker": "nsa"
+ },
+ {
+  "id": "german_unity",
+  "when": {
+   "date": "1990-10"
+  },
+  "title": "Germany reunifies",
+  "text": "East and West Germany formally unite. The new Germany pledges to remain in NATO.",
+  "effects": [
+   [
+    "rename",
+    "DEU",
+    "Germany"
+   ],
+   [
+    "add",
+    "DEU",
+    "pop",
+    16
+   ],
+   [
+    "add",
+    "DEU",
+    "gdp",
+    120
+   ],
+   [
+    "add",
+    "DEU",
+    "stability",
+    -4
+   ],
+   [
+    "add",
+    "SUN",
+    "stability",
+    -3
+   ],
+   [
+    "log",
+    "Germany is reunified."
+   ]
+  ],
+  "speaker": "state"
+ },
+ {
+  "id": "soviet_coup",
+  "when": {
+   "date": "1991-08",
+   "if": [
+    [
+     "active",
+     "SUN"
+    ]
+   ]
+  },
+  "title": "Hardliners attempt a coup in Moscow",
+  "text": "Soviet hardliners have detained the General Secretary and declared a state of emergency. Crowds are gathering around the Russian parliament.",
+  "effects": [
+   [
+    "add",
+    "SUN",
+    "stability",
+    -18
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Publicly back the reformers (5 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -5
+     ],
+     [
+      "add",
+      "SUN",
+      "relation",
+      10
+     ],
+     [
+      "add",
+      "SUN",
+      "stability",
+      -6
+     ],
+     [
+      "us",
+      "approval",
+      2
+     ]
+    ],
+    "advisors": {
+     "state": 3,
+     "un": 2
+    }
+   },
+   {
+    "label": "Wait and see",
+    "effects": [],
+    "advisors": {
+     "cia": 1,
+     "state": -2
+    }
+   }
+  ],
+  "speaker": "cia"
+ },
+ {
+  "id": "soviet_breakup",
+  "when": {
+   "after": "1991-09",
+   "chance": 0.35,
+   "if": [
+    [
+     "active",
+     "SUN"
+    ],
+    [
+     "stat",
+     "SUN",
+     "stability",
+     "<",
+     35
+    ]
+   ]
+  },
+  "title": "The Soviet Union dissolves",
+  "text": "The republics have declared independence one after another. The Soviet flag is lowered over the Kremlin; Russia takes the Soviet seat at the UN and its nuclear arsenal.",
+  "effects": [
+   [
+    "split",
+    "SUN"
+   ],
+   [
+    "bloc_all",
+    "warsaw",
+    "nonaligned"
+   ],
+   [
+    "us",
+    "approval",
+    3
+   ]
+  ],
+  "speaker": "state"
+ },
+ {
+  "id": "yugoslav_breakup",
+  "when": {
+   "after": "1991-06",
+   "chance": 0.25,
+   "if": [
+    [
+     "active",
+     "YUG"
+    ],
+    [
+     "stat",
+     "YUG",
+     "stability",
+     "<",
+     40
+    ]
+   ]
+  },
+  "title": "Yugoslavia breaks apart",
+  "text": "Slovenia and Croatia have declared independence, and fighting has begun. Bosnia is next.",
+  "effects": [
+   [
+    "split",
+    "YUG"
+   ],
+   [
+    "war",
+    "SRB",
+    "HRV",
+    10
+   ],
+   [
+    "civil_war",
+    "BIH",
+    true
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Recognise the new states (5 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -5
+     ],
+     [
+      "add",
+      "HRV",
+      "relation",
+      15
+     ],
+     [
+      "add",
+      "SVN",
+      "relation",
+      15
+     ],
+     [
+      "add",
+      "SRB",
+      "relation",
+      -20
+     ]
+    ],
+    "advisors": {
+     "state": 2,
+     "un": 2
+    }
+   },
+   {
+    "label": "Leave it to the Europeans",
+    "effects": [],
+    "advisors": {
+     "chief": 2,
+     "un": -2
+    }
+   }
+  ],
+  "speaker": "state"
+ },
+ {
+  "id": "czech_split",
+  "when": {
+   "date": "1993-01",
+   "if": [
+    [
+     "active",
+     "CSK"
+    ]
+   ]
+  },
+  "title": "Czechoslovakia splits peacefully",
+  "text": "The Czech Republic and Slovakia go their separate ways in a negotiated 'velvet divorce'.",
+  "effects": [
+   [
+    "split",
+    "CSK"
+   ]
+  ],
+  "speaker": "state"
+ },
+ {
+  "id": "eritrea",
+  "when": {
+   "date": "1993-05",
+   "if": [
+    [
+     "active",
+     "ETH"
+    ]
+   ]
+  },
+  "title": "Eritrea becomes independent",
+  "text": "After a referendum, Eritrea separates from Ethiopia.",
+  "effects": [
+   [
+    "split",
+    "ETH"
+   ],
+   [
+    "civil_war",
+    "ETH",
+    false
+   ]
+  ],
+  "speaker": "un"
+ },
+ {
+  "id": "somalia_famine",
+  "when": {
+   "date": "1992-01"
+  },
+  "title": "Famine spreads across Somalia",
+  "text": "Clan warfare has destroyed farms and blocked relief convoys. Aid agencies warn of mass starvation.",
+  "effects": [
+   [
+    "add",
+    "SOM",
+    "hunger",
+    20
+   ],
+   [
+    "add",
+    "SOM",
+    "stability",
+    -5
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Airlift food aid ($2bn)",
+    "effects": [
+     [
+      "funds",
+      "aid",
+      -2
+     ],
+     [
+      "add",
+      "SOM",
+      "hunger",
+      -15
+     ],
+     [
+      "add",
+      "SOM",
+      "relation",
+      10
+     ],
+     [
+      "us",
+      "approval",
+      2
+     ]
+    ],
+    "advisors": {
+     "state": 3,
+     "un": 4
+    }
+   },
+   {
+    "label": "Send troops to secure relief convoys",
+    "effects": [
+     [
+      "deploy",
+      "SOM"
+     ],
+     [
+      "add",
+      "SOM",
+      "hunger",
+      -20
+     ],
+     [
+      "us",
+      "approval",
+      3
+     ]
+    ],
+    "advisors": {
+     "un": 3,
+     "defense": -2
+    }
+   },
+   {
+    "label": "Not our fight",
+    "effects": [
+     [
+      "us",
+      "approval",
+      -2
+     ]
+    ],
+    "advisors": {
+     "un": -4,
+     "chief": 1
+    }
+   }
+  ],
+  "speaker": "un"
+ },
+ {
+  "id": "nk_program",
+  "when": {
+   "after": "1992-06",
+   "chance": 0.08,
+   "if": [
+    [
+     "stat",
+     "PRK",
+     "ambition",
+     ">",
+     60
+    ]
+   ]
+  },
+  "title": "North Korea's nuclear programme",
+  "text": "Inspectors report North Korea is reprocessing plutonium. Pyongyang threatens to leave the Non-Proliferation Treaty.",
+  "once": true,
+  "choices": [
+   {
+    "label": "Negotiate a freeze for aid ($2bn)",
+    "effects": [
+     [
+      "funds",
+      "aid",
+      -2
+     ],
+     [
+      "add",
+      "PRK",
+      "ambition",
+      -15
+     ],
+     [
+      "add",
+      "PRK",
+      "relation",
+      10
+     ]
+    ],
+    "advisors": {
+     "state": 4,
+     "nsa": -2
+    }
+   },
+   {
+    "label": "Sanctions and a show of force",
+    "effects": [
+     [
+      "sanction",
+      "PRK"
+     ],
+     [
+      "add",
+      "PRK",
+      "ambition",
+      5
+     ],
+     [
+      "add",
+      "KOR",
+      "relation",
+      5
+     ]
+    ],
+    "advisors": {
+     "defense": 3,
+     "nsa": 3,
+     "state": -2
+    }
+   },
+   {
+    "label": "Ignore the reports",
+    "effects": [
+     [
+      "chance",
+      0.5,
+      [
+       [
+        "set",
+        "PRK",
+        "nuclear",
+        true
+       ],
+       [
+        "log",
+        "North Korea has assembled a nuclear device."
+       ]
+      ],
+      []
+     ]
+    ],
+    "advisors": {
+     "cia": -4,
+     "nsa": -4
+    }
+   }
+  ],
+  "speaker": "cia"
+ },
+ {
+  "id": "desert_storm",
+  "speaker": "defense",
+  "when": {
+   "after": "1991-01",
+   "chance": 0.5,
+   "if": [
+    [
+     "stat",
+     "KWT",
+     "relation",
+     "<",
+     25
+    ],
+    [
+     "active",
+     "IRQ"
+    ]
+   ]
+  },
+  "title": "The UN deadline for Iraq has passed",
+  "text": "Kuwait remains under Iraqi control. A coalition of 30 nations awaits your order. Planners promise a short air campaign followed by a ground war.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Launch the coalition offensive (25 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -25
+     ],
+     [
+      "add",
+      "IRQ",
+      "military",
+      -35
+     ],
+     [
+      "add",
+      "IRQ",
+      "stability",
+      -20
+     ],
+     [
+      "end_war",
+      "IRQ"
+     ],
+     [
+      "set",
+      "KWT",
+      "relation",
+      70
+     ],
+     [
+      "set",
+      "KWT",
+      "bloc",
+      "west"
+     ],
+     [
+      "set",
+      "KWT",
+      "stability",
+      45
+     ],
+     [
+      "us",
+      "approval",
+      12
+     ],
+     [
+      "us",
+      "standing",
+      6
+     ],
+     [
+      "add",
+      "IRQ",
+      "relation",
+      -30
+     ]
+    ],
+    "advisors": {
+     "defense": 5,
+     "nsa": 4,
+     "un": 3
+    }
+   },
+   {
+    "label": "Give sanctions more time",
+    "effects": [
+     [
+      "add",
+      "IRQ",
+      "stability",
+      -6
+     ],
+     [
+      "us",
+      "approval",
+      -3
+     ]
+    ],
+    "advisors": {
+     "state": 2,
+     "defense": -3,
+     "nsa": -3
+    }
+   },
+   {
+    "label": "Accept the new reality",
+    "effects": [
+     [
+      "us",
+      "approval",
+      -10
+     ],
+     [
+      "us",
+      "standing",
+      -10
+     ]
+    ],
+    "advisors": {
+     "defense": -6,
+     "nsa": -6,
+     "un": -5
+    }
+   }
+  ]
+ },
+ {
+  "id": "desert_storm_war",
+  "speaker": "defense",
+  "when": {
+   "after": "1990-11",
+   "chance": 0.5,
+   "if": [
+    [
+     "at_war",
+     "KWT"
+    ],
+    [
+     "active",
+     "IRQ"
+    ]
+   ]
+  },
+  "title": "The UN deadline for Iraq has passed",
+  "text": "Iraqi forces are still fighting in Kuwait. A coalition of 30 nations awaits your order. Planners promise a short air campaign followed by a ground war.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Launch the coalition offensive (25 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -25
+     ],
+     [
+      "add",
+      "IRQ",
+      "military",
+      -35
+     ],
+     [
+      "add",
+      "IRQ",
+      "stability",
+      -20
+     ],
+     [
+      "end_war",
+      "IRQ"
+     ],
+     [
+      "set",
+      "KWT",
+      "relation",
+      70
+     ],
+     [
+      "set",
+      "KWT",
+      "bloc",
+      "west"
+     ],
+     [
+      "set",
+      "KWT",
+      "stability",
+      45
+     ],
+     [
+      "us",
+      "approval",
+      12
+     ],
+     [
+      "us",
+      "standing",
+      6
+     ],
+     [
+      "add",
+      "IRQ",
+      "relation",
+      -30
+     ]
+    ],
+    "advisors": {
+     "defense": 5,
+     "nsa": 4,
+     "un": 3
+    }
+   },
+   {
+    "label": "Give sanctions more time",
+    "effects": [
+     [
+      "add",
+      "IRQ",
+      "stability",
+      -6
+     ],
+     [
+      "us",
+      "approval",
+      -3
+     ]
+    ],
+    "advisors": {
+     "state": 2,
+     "defense": -3,
+     "nsa": -3
+    }
+   },
+   {
+    "label": "Accept the new reality",
+    "effects": [
+     [
+      "us",
+      "approval",
+      -10
+     ],
+     [
+      "us",
+      "standing",
+      -10
+     ]
+    ],
+    "advisors": {
+     "defense": -6,
+     "nsa": -6,
+     "un": -5
+    }
+   }
+  ]
+ },
+ {
+  "id": "haiti_coup",
+  "speaker": "state",
+  "when": {
+   "date": "1991-09"
+  },
+  "title": "Military coup in Haiti",
+  "text": "Haiti's army has ousted the country's first freely elected president. Boat people are heading for Florida.",
+  "effects": [
+   [
+    "add",
+    "HTI",
+    "stability",
+    -15
+   ],
+   [
+    "set",
+    "HTI",
+    "freedom",
+    10
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Sanctions and an embargo",
+    "effects": [
+     [
+      "sanction",
+      "HTI"
+     ],
+     [
+      "us",
+      "standing",
+      2
+     ]
+    ],
+    "advisors": {
+     "state": 2,
+     "un": 2
+    }
+   },
+   {
+    "label": "Restore the elected government by force (15 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -15
+     ],
+     [
+      "regime",
+      "HTI",
+      true
+     ],
+     [
+      "set",
+      "HTI",
+      "freedom",
+      50
+     ],
+     [
+      "us",
+      "approval",
+      2
+     ]
+    ],
+    "advisors": {
+     "defense": 2,
+     "un": 1,
+     "chief": -1
+    }
+   },
+   {
+    "label": "Accept the junta",
+    "effects": [
+     [
+      "us",
+      "standing",
+      -5
+     ]
+    ],
+    "advisors": {
+     "un": -3
+    }
+   }
+  ]
+ },
+ {
+  "id": "sa_reform",
+  "speaker": "state",
+  "when": {
+   "date": "1992-03",
+   "if": [
+    [
+     "active",
+     "ZAF"
+    ]
+   ]
+  },
+  "title": "South Africa votes to end apartheid",
+  "text": "White South Africans have voted two-to-one to negotiate an end to apartheid. Talks on a new constitution begin.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Lift sanctions and pledge support (5 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -5
+     ],
+     [
+      "set",
+      "ZAF",
+      "sanctioned",
+      false
+     ],
+     [
+      "add",
+      "ZAF",
+      "relation",
+      15
+     ],
+     [
+      "add",
+      "ZAF",
+      "freedom",
+      15
+     ],
+     [
+      "us",
+      "standing",
+      3
+     ]
+    ],
+    "advisors": {
+     "state": 3,
+     "un": 3
+    }
+   },
+   {
+    "label": "Keep sanctions until elections are held",
+    "effects": [
+     [
+      "add",
+      "ZAF",
+      "freedom",
+      10
+     ]
+    ],
+    "advisors": {
+     "un": 1
+    }
+   }
+  ]
+ },
+ {
+  "id": "bosnia_siege",
+  "speaker": "un",
+  "when": {
+   "after": "1992-04",
+   "chance": 0.5,
+   "if": [
+    [
+     "active",
+     "BIH"
+    ],
+    [
+     "civil_war",
+     "BIH"
+    ]
+   ]
+  },
+  "title": "Sarajevo under siege",
+  "text": "Bosnian Serb forces are shelling Sarajevo. Television shows breadlines hit by mortar fire.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "NATO air strikes (15 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -15
+     ],
+     [
+      "add",
+      "SRB",
+      "military",
+      -10
+     ],
+     [
+      "add",
+      "SRB",
+      "relation",
+      -20
+     ],
+     [
+      "add",
+      "BIH",
+      "stability",
+      10
+     ],
+     [
+      "us",
+      "standing",
+      3
+     ]
+    ],
+    "advisors": {
+     "defense": 3,
+     "nsa": 2,
+     "state": 1
+    }
+   },
+   {
+    "label": "Airlift humanitarian aid ($1bn)",
+    "effects": [
+     [
+      "funds",
+      "aid",
+      -1
+     ],
+     [
+      "add",
+      "BIH",
+      "hunger",
+      -12
+     ],
+     [
+      "us",
+      "standing",
+      2
+     ]
+    ],
+    "advisors": {
+     "un": 3
+    }
+   },
+   {
+    "label": "Arms embargo, stay out",
+    "effects": [
+     [
+      "us",
+      "standing",
+      -3
+     ]
+    ],
+    "advisors": {
+     "chief": 1,
+     "un": -2
+    }
+   }
+  ]
+ },
+ {
+  "id": "nafta",
+  "speaker": "treasury",
+  "when": {
+   "date": "1992-08",
+   "if": [
+    [
+     "active",
+     "MEX"
+    ]
+   ]
+  },
+  "title": "A North American free-trade pact",
+  "text": "Negotiators have a deal to cut tariffs between the US, Canada and Mexico. Unions are furious.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Sign and fight for ratification (15 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -15
+     ],
+     [
+      "set",
+      "MEX",
+      "trade_deal",
+      true
+     ],
+     [
+      "set",
+      "CAN",
+      "trade_deal",
+      true
+     ],
+     [
+      "add",
+      "MEX",
+      "relation",
+      10
+     ],
+     [
+      "us",
+      "approval",
+      -2
+     ],
+     [
+      "us",
+      "congress",
+      -3
+     ]
+    ],
+    "advisors": {
+     "treasury": 4,
+     "state": 2,
+     "chief": -2
+    }
+   },
+   {
+    "label": "Shelve it",
+    "effects": [
+     [
+      "add",
+      "MEX",
+      "relation",
+      -5
+     ]
+    ],
+    "advisors": {
+     "chief": 2,
+     "treasury": -3
+    }
+   }
+  ]
+ },
+ {
+  "id": "oslo",
+  "speaker": "state",
+  "when": {
+   "after": "1993-06",
+   "chance": 0.4
+  },
+  "title": "Secret Middle East peace talks",
+  "text": "Israeli and Palestinian negotiators have reached a framework deal in secret talks abroad. They want a signing on the White House lawn.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Host the signing (10 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -10
+     ],
+     [
+      "us",
+      "treaties",
+      1
+     ],
+     [
+      "us",
+      "approval",
+      4
+     ],
+     [
+      "us",
+      "standing",
+      6
+     ],
+     [
+      "add",
+      "ISR",
+      "relation",
+      5
+     ]
+    ],
+    "advisors": {
+     "state": 4,
+     "un": 3
+    }
+   },
+   {
+    "label": "Let others take the stage",
+    "effects": [
+     [
+      "us",
+      "standing",
+      1
+     ]
+    ],
+    "advisors": {
+     "state": -1
+    }
+   }
+  ]
+ },
+ {
+  "id": "mogadishu",
+  "speaker": "defense",
+  "when": {
+   "after": "1993-06",
+   "chance": 0.3,
+   "if": [
+    [
+     "state",
+     "SOM",
+     "troops"
+    ]
+   ]
+  },
+  "title": "Firefight in Mogadishu",
+  "text": "A raid to capture a warlord has gone wrong. Two helicopters are down and 18 Americans are dead.",
+  "effects": [
+   [
+    "us",
+    "approval",
+    -5
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Withdraw from Somalia",
+    "effects": [
+     [
+      "withdraw",
+      "SOM"
+     ],
+     [
+      "us",
+      "approval",
+      -2
+     ],
+     [
+      "add",
+      "SOM",
+      "stability",
+      -5
+     ]
+    ],
+    "advisors": {
+     "chief": 2,
+     "defense": -2
+    }
+   },
+   {
+    "label": "Reinforce and finish the job (10 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -10
+     ],
+     [
+      "us",
+      "approval",
+      -4
+     ],
+     [
+      "add",
+      "SOM",
+      "stability",
+      5
+     ]
+    ],
+    "advisors": {
+     "defense": 3,
+     "chief": -3
+    }
+   }
+  ]
+ },
+ {
+  "id": "rwanda",
+  "speaker": "un",
+  "when": {
+   "after": "1994-04",
+   "chance": 0.5,
+   "if": [
+    [
+     "active",
+     "RWA"
+    ],
+    [
+     "stat",
+     "RWA",
+     "stability",
+     "<",
+     55
+    ]
+   ]
+  },
+  "title": "Mass killings in Rwanda",
+  "text": "Aid workers report systematic killings of civilians across Rwanda. Tens of thousands are already dead. The UN force is tiny.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Send troops to stop the killing (15 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -15
+     ],
+     [
+      "deploy",
+      "RWA"
+     ],
+     [
+      "add",
+      "RWA",
+      "stability",
+      15
+     ],
+     [
+      "us",
+      "standing",
+      10
+     ],
+     [
+      "us",
+      "approval",
+      -1
+     ]
+    ],
+    "advisors": {
+     "un": 5,
+     "state": 3,
+     "defense": -1
+    }
+   },
+   {
+    "label": "Fund and reinforce the UN mission ($2bn)",
+    "effects": [
+     [
+      "funds",
+      "aid",
+      -2
+     ],
+     [
+      "add",
+      "RWA",
+      "stability",
+      6
+     ],
+     [
+      "us",
+      "standing",
+      4
+     ]
+    ],
+    "advisors": {
+     "un": 3,
+     "state": 2
+    }
+   },
+   {
+    "label": "Avoid the word 'genocide'",
+    "effects": [
+     [
+      "us",
+      "standing",
+      -12
+     ],
+     [
+      "add",
+      "RWA",
+      "stability",
+      -15
+     ],
+     [
+      "civil_war",
+      "RWA",
+      true
+     ]
+    ],
+    "advisors": {
+     "un": -6,
+     "state": -3
+    }
+   }
+  ]
+ },
+ {
+  "id": "chechnya",
+  "speaker": "state",
+  "when": {
+   "after": "1994-12",
+   "chance": 0.4,
+   "if": [
+    [
+     "active",
+     "RUS"
+    ]
+   ]
+  },
+  "title": "Russia sends tanks into Chechnya",
+  "text": "Moscow has launched an assault on the breakaway region of Chechnya. Grozny is being shelled.",
+  "effects": [
+   [
+    "add",
+    "RUS",
+    "stability",
+    -8
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Condemn the assault",
+    "effects": [
+     [
+      "add",
+      "RUS",
+      "relation",
+      -12
+     ],
+     [
+      "us",
+      "standing",
+      2
+     ]
+    ],
+    "advisors": {
+     "un": 2,
+     "state": 1
+    }
+   },
+   {
+    "label": "Call it an internal affair",
+    "effects": [
+     [
+      "add",
+      "RUS",
+      "relation",
+      5
+     ],
+     [
+      "us",
+      "standing",
+      -2
+     ]
+    ],
+    "advisors": {
+     "state": 1,
+     "un": -2
+    }
+   }
+  ]
+ },
+ {
+  "id": "peso_crisis",
+  "speaker": "treasury",
+  "when": {
+   "after": "1994-12",
+   "chance": 0.5,
+   "if": [
+    [
+     "active",
+     "MEX"
+    ]
+   ]
+  },
+  "title": "The peso collapses",
+  "text": "Mexico's currency has lost half its value in a week. Without help, it may default, and the crisis could spread across Latin America.",
+  "effects": [
+   [
+    "add",
+    "MEX",
+    "stability",
+    -6
+   ]
+  ],
+  "choices": [
+   {
+    "label": "$20bn rescue package (10 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -10
+     ],
+     [
+      "add",
+      "MEX",
+      "stability",
+      8
+     ],
+     [
+      "add",
+      "MEX",
+      "relation",
+      12
+     ],
+     [
+      "us",
+      "approval",
+      -2
+     ]
+    ],
+    "advisors": {
+     "treasury": 4,
+     "state": 2
+    }
+   },
+   {
+    "label": "Let markets sort it out",
+    "effects": [
+     [
+      "add",
+      "MEX",
+      "stability",
+      -12
+     ],
+     [
+      "mul",
+      "MEX",
+      "gdp",
+      0.93
+     ]
+    ],
+    "advisors": {
+     "treasury": -2
+    }
+   }
+  ]
+ },
+ {
+  "id": "strait_1996",
+  "speaker": "defense",
+  "when": {
+   "after": "1995-07",
+   "chance": 0.15,
+   "if": [
+    [
+     "active",
+     "TWN"
+    ],
+    [
+     "stat",
+     "CHN",
+     "relation",
+     "<",
+     20
+    ]
+   ]
+  },
+  "title": "Chinese missile tests near Taiwan",
+  "text": "Beijing has fired missiles into waters off Taiwan ahead of the island's first direct presidential election.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Send two carrier groups",
+    "effects": [
+     [
+      "add",
+      "CHN",
+      "relation",
+      -10
+     ],
+     [
+      "add",
+      "TWN",
+      "relation",
+      10
+     ],
+     [
+      "add",
+      "CHN",
+      "ambition",
+      -4
+     ]
+    ],
+    "advisors": {
+     "defense": 4,
+     "nsa": 3
+    }
+   },
+   {
+    "label": "Private warning to Beijing",
+    "effects": [
+     [
+      "add",
+      "CHN",
+      "ambition",
+      -2
+     ]
+    ],
+    "advisors": {
+     "state": 3
+    }
+   },
+   {
+    "label": "Stay quiet",
+    "effects": [
+     [
+      "add",
+      "CHN",
+      "ambition",
+      4
+     ],
+     [
+      "add",
+      "TWN",
+      "stability",
+      -6
+     ]
+    ],
+    "advisors": {
+     "nsa": -3
+    }
+   }
+  ]
+ },
+ {
+  "id": "liberia",
+  "speaker": "un",
+  "when": {
+   "after": "1990-08",
+   "chance": 0.2,
+   "if": [
+    [
+     "civil_war",
+     "LBR"
+    ]
+   ]
+  },
+  "title": "Monrovia falls into chaos",
+  "text": "Rebel factions are fighting street by street in Liberia's capital. Americans are trapped.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Marines evacuate citizens",
+    "effects": [
+     [
+      "us",
+      "approval",
+      1
+     ]
+    ],
+    "advisors": {
+     "defense": 2
+    }
+   },
+   {
+    "label": "Back a West African peace force ($1bn)",
+    "effects": [
+     [
+      "funds",
+      "aid",
+      -1
+     ],
+     [
+      "add",
+      "LBR",
+      "stability",
+      8
+     ],
+     [
+      "us",
+      "standing",
+      2
+     ]
+    ],
+    "advisors": {
+     "un": 3
+    }
+   }
+  ]
+ },
+ {
+  "id": "cold_war_end",
+  "speaker": "state",
+  "when": {
+   "after": "1990-11",
+   "chance": 0.3,
+   "if": [
+    [
+     "active",
+     "SUN"
+    ]
+   ]
+  },
+  "title": "Conventional arms treaty for Europe",
+  "text": "NATO and the Warsaw Pact have a draft treaty to slash tanks and artillery in Europe.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Sign it (5 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -5
+     ],
+     [
+      "us",
+      "treaties",
+      1
+     ],
+     [
+      "add",
+      "SUN",
+      "relation",
+      10
+     ],
+     [
+      "add",
+      "SUN",
+      "military",
+      -6
+     ],
+     [
+      "us",
+      "standing",
+      3
+     ]
+    ],
+    "advisors": {
+     "state": 3,
+     "un": 2,
+     "defense": -1
+    }
+   },
+   {
+    "label": "Hold out for better terms",
+    "effects": [
+     [
+      "add",
+      "SUN",
+      "relation",
+      -4
+     ]
+    ],
+    "advisors": {
+     "defense": 2
+    }
+   }
+  ]
+ },
+ {
+  "id": "recession_1991",
+  "speaker": "treasury",
+  "when": {
+   "date": "1991-02"
+  },
+  "title": "The economy slides into recession",
+  "text": "Unemployment is climbing past 7 percent and consumer confidence has collapsed. Your opponents are already calling it your recession.",
+  "effects": [
+   [
+    "us",
+    "approval",
+    -6
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Break your no-new-taxes pledge to cut the deficit",
+    "effects": [
+     [
+      "us",
+      "approval",
+      -4
+     ],
+     [
+      "us",
+      "congress",
+      6
+     ],
+     [
+      "budget_base",
+      0.98
+     ]
+    ],
+    "advisors": {
+     "treasury": 4,
+     "chief": -3
+    }
+   },
+   {
+    "label": "Stimulus package ($6bn)",
+    "effects": [
+     [
+      "funds",
+      "domestic",
+      -6
+     ],
+     [
+      "us",
+      "approval",
+      3
+     ]
+    ],
+    "advisors": {
+     "chief": 3,
+     "treasury": -3
+    }
+   },
+   {
+    "label": "Insist the recovery is coming",
+    "effects": [
+     [
+      "chance",
+      0.4,
+      [
+       [
+        "us",
+        "approval",
+        3
+       ],
+       [
+        "log",
+        "Growth returns sooner than expected."
+       ]
+      ],
+      [
+       [
+        "us",
+        "approval",
+        -3
+       ],
+       [
+        "log",
+        "The 'recovery is coming' line becomes a punchline."
+       ]
+      ]
+     ]
+    ],
+    "advisors": {
+     "chief": -1
+    }
+   }
+  ]
+ }
+]

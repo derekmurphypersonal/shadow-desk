@@ -1,0 +1,23 @@
+{
+ "id": "modern_2026",
+ "name": "2026 Modern",
+ "description": "November 2026. A multipolar world: war in Europe, tension across the Taiwan Strait, a coup belt across the Sahel, and an AI race between superpowers. Figures are an approximate snapshot; verify and tune before release.",
+ "start": {"year": 2026, "month": 11},
+ "first_election_in_months": 24,
+ "cost_scale": 2.5,
+ "systems": ["cyber", "climate"],
+ "blocs": {
+  "west": {"name": "Western alliance", "leader": "USA", "baseline": 55},
+  "china": {"name": "China-aligned", "leader": "CHN", "baseline": -20},
+  "russia": {"name": "Russia-aligned", "leader": "RUS", "baseline": -35},
+  "nonaligned": {"name": "Non-aligned", "leader": "", "baseline": 10}
+ },
+ "us": {
+  "approval": 42, "political_capital": 45, "congress": 48,
+  "budget": {"defense": 900, "intel": 105, "aid": 35, "domestic": 920},
+  "deficit_pct_baseline": 6.0,
+  "gdp": 30000
+ },
+ "wars": [{"a": "RUS", "b": "UKR", "progress": 8, "months": 57}],
+ "agendas": ["peacemaker", "humanitarian", "democratiser", "hegemon"]
+}

@@ -1,0 +1,3192 @@
+[
+ {
+  "id": "famine",
+  "template": true,
+  "speaker": "un",
+  "chance": 0.25,
+  "if": [
+   [
+    "self",
+    "hunger",
+    ">",
+    60
+   ]
+  ],
+  "title": "Famine warning: $NAME",
+  "text": "Crop failures and conflict have left millions in $NAME without enough food. Relief agencies are appealing for funds.",
+  "effects": [
+   [
+    "add",
+    "$C",
+    "hunger",
+    8
+   ],
+   [
+    "add",
+    "$C",
+    "stability",
+    -3
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Emergency food aid ($1bn)",
+    "effects": [
+     [
+      "funds",
+      "aid",
+      -1
+     ],
+     [
+      "add",
+      "$C",
+      "hunger",
+      -12
+     ],
+     [
+      "add",
+      "$C",
+      "relation",
+      6
+     ],
+     [
+      "us",
+      "approval",
+      1
+     ],
+     [
+      "us",
+      "standing",
+      2
+     ]
+    ],
+    "advisors": {
+     "un": 3,
+     "state": 2
+    }
+   },
+   {
+    "label": "Decline",
+    "effects": [
+     [
+      "us",
+      "standing",
+      -1
+     ]
+    ],
+    "advisors": {
+     "un": -2
+    }
+   }
+  ],
+  "minor": true
+ },
+ {
+  "id": "coup_plot",
+  "template": true,
+  "speaker": "cia",
+  "chance": 0.2,
+  "if": [
+   [
+    "self",
+    "stability",
+    "<",
+    25
+   ],
+   [
+    "self",
+    "relation",
+    ">",
+    20
+   ]
+  ],
+  "title": "Coup plot in $NAME",
+  "text": "Our station in $NAME reports officers plotting against a friendly government.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Warn the government and share intelligence",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "stability",
+      6
+     ],
+     [
+      "add",
+      "$C",
+      "relation",
+      6
+     ]
+    ],
+    "advisors": {
+     "cia": 2,
+     "state": 2
+    }
+   },
+   {
+    "label": "Stay silent",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "stability",
+      -6
+     ]
+    ],
+    "advisors": {
+     "cia": -1
+    }
+   }
+  ],
+  "minor": true
+ },
+ {
+  "id": "terror_attack",
+  "template": true,
+  "speaker": "nsa",
+  "chance": 0.12,
+  "if": [
+   [
+    "self",
+    "terror",
+    ">",
+    60
+   ],
+   [
+    "self",
+    "relation",
+    "<",
+    -20
+   ]
+  ],
+  "title": "Bombing at a US embassy",
+  "text": "A truck bomb has struck a US embassy. Intelligence links the cell to groups sheltered by $NAME.",
+  "effects": [
+   [
+    "us",
+    "approval",
+    3
+   ],
+   [
+    "add",
+    "$C",
+    "relation",
+    -10
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Retaliatory strikes on camps (10 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -10
+     ],
+     [
+      "add",
+      "$C",
+      "stability",
+      -6
+     ],
+     [
+      "add",
+      "$C",
+      "terror",
+      -12
+     ],
+     [
+      "us",
+      "approval",
+      3
+     ],
+     [
+      "us",
+      "standing",
+      -2
+     ]
+    ],
+    "advisors": {
+     "nsa": 4,
+     "defense": 3,
+     "un": -3
+    }
+   },
+   {
+    "label": "Sanctions and law enforcement",
+    "effects": [
+     [
+      "sanction",
+      "$C"
+     ],
+     [
+      "add",
+      "$C",
+      "terror",
+      -4
+     ]
+    ],
+    "advisors": {
+     "state": 2,
+     "treasury": 1,
+     "un": 2
+    }
+   },
+   {
+    "label": "Measured statement",
+    "effects": [
+     [
+      "us",
+      "approval",
+      -5
+     ]
+    ],
+    "advisors": {
+     "nsa": -4,
+     "chief": -2
+    }
+   }
+  ]
+ },
+ {
+  "id": "border_clash",
+  "template": true,
+  "speaker": "nsa",
+  "chance": 0.1,
+  "if": [
+   [
+    "self",
+    "ambition",
+    ">",
+    65
+   ],
+   [
+    "self",
+    "stability",
+    ">",
+    30
+   ]
+  ],
+  "title": "Border clashes: $NAME",
+  "text": "Troops from $NAME have exchanged fire with a neighbour. Analysts fear escalation.",
+  "effects": [
+   [
+    "add",
+    "$C",
+    "ambition",
+    4
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Send an envoy to defuse it (5 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -5
+     ],
+     [
+      "add",
+      "$C",
+      "ambition",
+      -8
+     ],
+     [
+      "add",
+      "$C",
+      "relation",
+      3
+     ]
+    ],
+    "advisors": {
+     "state": 3
+    }
+   },
+   {
+    "label": "Warn of consequences",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "relation",
+      -8
+     ],
+     [
+      "add",
+      "$C",
+      "ambition",
+      -3
+     ]
+    ],
+    "advisors": {
+     "nsa": 2,
+     "defense": 1
+    }
+   },
+   {
+    "label": "Ignore",
+    "effects": [],
+    "advisors": {
+     "nsa": -1
+    }
+   }
+  ]
+ },
+ {
+  "id": "disaster",
+  "template": true,
+  "speaker": "un",
+  "chance": 0.05,
+  "if": [
+   [
+    "self",
+    "pop",
+    ">",
+    5
+   ]
+  ],
+  "title": "Disaster strikes $NAME",
+  "text": "Floods and landslides have hit $NAME. Thousands are feared dead and the main cities are without power.",
+  "effects": [
+   [
+    "add",
+    "$C",
+    "stability",
+    -6
+   ],
+   [
+    "add",
+    "$C",
+    "hunger",
+    6
+   ],
+   [
+    "mul",
+    "$C",
+    "gdp",
+    0.98
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Disaster relief ($1bn)",
+    "effects": [
+     [
+      "funds",
+      "aid",
+      -1
+     ],
+     [
+      "add",
+      "$C",
+      "relation",
+      12
+     ],
+     [
+      "add",
+      "$C",
+      "stability",
+      4
+     ],
+     [
+      "us",
+      "approval",
+      1
+     ],
+     [
+      "us",
+      "standing",
+      2
+     ]
+    ],
+    "advisors": {
+     "state": 3,
+     "un": 2
+    }
+   },
+   {
+    "label": "Send condolences",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "relation",
+      -2
+     ]
+    ],
+    "advisors": {
+     "un": -1
+    }
+   }
+  ],
+  "minor": true
+ },
+ {
+  "id": "hurricane",
+  "template": true,
+  "speaker": "un",
+  "chance": 0.12,
+  "if": [
+   [
+    "self_region",
+    "Caribbean",
+    "Central America"
+   ]
+  ],
+  "title": "Hurricane flattens $NAME",
+  "text": "A category-five storm has torn across $NAME. Ports are wrecked and the power grid is down.",
+  "effects": [
+   [
+    "add",
+    "$C",
+    "stability",
+    -8
+   ],
+   [
+    "mul",
+    "$C",
+    "gdp",
+    0.97
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Send the Navy with relief supplies",
+    "effects": [
+     [
+      "funds",
+      "defense",
+      -1
+     ],
+     [
+      "add",
+      "$C",
+      "relation",
+      15
+     ],
+     [
+      "add",
+      "$C",
+      "stability",
+      5
+     ],
+     [
+      "us",
+      "approval",
+      2
+     ]
+    ],
+    "advisors": {
+     "defense": 1,
+     "state": 3
+    }
+   },
+   {
+    "label": "Cash grant ($1bn)",
+    "effects": [
+     [
+      "funds",
+      "aid",
+      -1
+     ],
+     [
+      "add",
+      "$C",
+      "relation",
+      8
+     ],
+     [
+      "add",
+      "$C",
+      "hunger",
+      -6
+     ]
+    ],
+    "advisors": {
+     "un": 2
+    }
+   },
+   {
+    "label": "Leave it to the region",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "relation",
+      -5
+     ]
+    ],
+    "advisors": {
+     "un": -2
+    }
+   }
+  ],
+  "minor": true
+ },
+ {
+  "id": "locusts",
+  "template": true,
+  "speaker": "un",
+  "chance": 0.08,
+  "if": [
+   [
+    "self_region",
+    "Eastern Africa",
+    "Northern Africa",
+    "Western Asia",
+    "Southern Asia"
+   ],
+   [
+    "self",
+    "hunger",
+    ">",
+    20
+   ]
+  ],
+  "title": "Locust swarms descend on $NAME",
+  "text": "Swarms the size of cities are stripping fields bare across $NAME.",
+  "effects": [
+   [
+    "add",
+    "$C",
+    "hunger",
+    10
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Fund aerial spraying ($1bn)",
+    "effects": [
+     [
+      "funds",
+      "aid",
+      -1
+     ],
+     [
+      "add",
+      "$C",
+      "hunger",
+      -8
+     ],
+     [
+      "add",
+      "$C",
+      "relation",
+      6
+     ]
+    ],
+    "advisors": {
+     "un": 3
+    }
+   },
+   {
+    "label": "Decline",
+    "effects": [],
+    "advisors": {
+     "un": -1
+    }
+   }
+  ],
+  "minor": true
+ },
+ {
+  "id": "refugees",
+  "template": true,
+  "speaker": "un",
+  "chance": 0.15,
+  "if": [
+   [
+    "self_state",
+    "civil_war"
+   ]
+  ],
+  "title": "Refugees flee $NAME",
+  "text": "Hundreds of thousands are crossing borders to escape the fighting in $NAME. Camps are overflowing.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Fund the camps ($1bn)",
+    "effects": [
+     [
+      "funds",
+      "aid",
+      -1
+     ],
+     [
+      "us",
+      "standing",
+      3
+     ],
+     [
+      "add",
+      "$C",
+      "hunger",
+      -4
+     ]
+    ],
+    "advisors": {
+     "un": 4,
+     "state": 1
+    }
+   },
+   {
+    "label": "Resettle refugees in the US",
+    "effects": [
+     [
+      "us",
+      "approval",
+      -2
+     ],
+     [
+      "us",
+      "standing",
+      6
+     ]
+    ],
+    "advisors": {
+     "un": 3,
+     "chief": -3
+    }
+   },
+   {
+    "label": "Not our problem",
+    "effects": [
+     [
+      "us",
+      "standing",
+      -3
+     ]
+    ],
+    "advisors": {
+     "un": -3,
+     "chief": 1
+    }
+   }
+  ],
+  "minor": true
+ },
+ {
+  "id": "hostages",
+  "template": true,
+  "speaker": "cia",
+  "chance": 0.08,
+  "if": [
+   [
+    "self",
+    "terror",
+    ">",
+    45
+   ],
+   [
+    "self",
+    "relation",
+    "<",
+    0
+   ]
+  ],
+  "title": "Americans taken hostage in $NAME",
+  "text": "Gunmen tied to $NAME's security services have seized six American aid workers.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Quiet negotiation through intermediaries",
+    "effects": [
+     [
+      "chance",
+      0.6,
+      [
+       [
+        "us",
+        "approval",
+        3
+       ],
+       [
+        "log",
+        "The hostages are released after quiet talks."
+       ]
+      ],
+      [
+       [
+        "us",
+        "scandal",
+        8
+       ],
+       [
+        "log",
+        "Reports of a ransom deal leak to the press."
+       ]
+      ]
+     ]
+    ],
+    "advisors": {
+     "state": 2,
+     "cia": 1
+    }
+   },
+   {
+    "label": "Rescue raid (10 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -10
+     ],
+     [
+      "chance",
+      0.55,
+      [
+       [
+        "us",
+        "approval",
+        8
+       ],
+       [
+        "log",
+        "Special forces free the hostages."
+       ]
+      ],
+      [
+       [
+        "us",
+        "approval",
+        -8
+       ],
+       [
+        "log",
+        "The rescue mission fails."
+       ]
+      ]
+     ],
+     [
+      "add",
+      "$C",
+      "relation",
+      -10
+     ]
+    ],
+    "advisors": {
+     "defense": 3,
+     "nsa": 2,
+     "state": -2
+    }
+   },
+   {
+    "label": "Refuse to deal",
+    "effects": [
+     [
+      "us",
+      "approval",
+      -3
+     ]
+    ],
+    "advisors": {
+     "nsa": 1,
+     "chief": -2
+    }
+   }
+  ]
+ },
+ {
+  "id": "protests",
+  "template": true,
+  "speaker": "state",
+  "chance": 0.12,
+  "if": [
+   [
+    "self",
+    "stability",
+    "<",
+    45
+   ],
+   [
+    "self",
+    "freedom",
+    "<",
+    40
+   ],
+   [
+    "self",
+    "pop",
+    ">",
+    3
+   ]
+  ],
+  "title": "Mass protests in $NAME",
+  "text": "Tens of thousands are in the streets of $NAME demanding elections. Security forces are massing.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Back the protesters",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "relation",
+      -15
+     ],
+     [
+      "add",
+      "$C",
+      "freedom",
+      5
+     ],
+     [
+      "add",
+      "$C",
+      "stability",
+      -5
+     ],
+     [
+      "us",
+      "standing",
+      3
+     ]
+    ],
+    "advisors": {
+     "state": 2,
+     "un": 3,
+     "treasury": -1
+    }
+   },
+   {
+    "label": "Urge restraint on all sides",
+    "effects": [
+     [
+      "us",
+      "standing",
+      1
+     ]
+    ],
+    "advisors": {
+     "state": 1
+    }
+   },
+   {
+    "label": "Back the government",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "relation",
+      10
+     ],
+     [
+      "us",
+      "standing",
+      -4
+     ]
+    ],
+    "advisors": {
+     "un": -3,
+     "cia": 1
+    }
+   }
+  ]
+ },
+ {
+  "id": "election_upset",
+  "template": true,
+  "speaker": "state",
+  "chance": 0.06,
+  "if": [
+   [
+    "self",
+    "freedom",
+    ">",
+    55
+   ],
+   [
+    "self",
+    "pop",
+    ">",
+    5
+   ]
+  ],
+  "title": "Upset election in $NAME",
+  "text": "Voters in $NAME have thrown out the governing party. The newcomers promise a 'fresh look' at foreign policy.",
+  "effects": [
+   [
+    "add",
+    "$C",
+    "relation",
+    -10
+   ],
+   [
+    "add",
+    "$C",
+    "stability",
+    2
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Call to congratulate the winner",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "relation",
+      6
+     ]
+    ],
+    "advisors": {
+     "state": 2
+    }
+   },
+   {
+    "label": "Wait to see what they do",
+    "effects": [],
+    "advisors": {}
+   }
+  ],
+  "minor": true
+ },
+ {
+  "id": "debt_crisis",
+  "template": true,
+  "speaker": "treasury",
+  "chance": 0.06,
+  "if": [
+   [
+    "self",
+    "gdp",
+    ">",
+    20
+   ],
+   [
+    "self",
+    "stability",
+    "<",
+    55
+   ],
+   [
+    "self",
+    "relation",
+    ">",
+    -20
+   ]
+  ],
+  "title": "$NAME on the brink of default",
+  "text": "Bond markets have shut $NAME out. Without a rescue it will default within weeks.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Back an emergency loan ($2bn)",
+    "effects": [
+     [
+      "funds",
+      "aid",
+      -2
+     ],
+     [
+      "add",
+      "$C",
+      "relation",
+      12
+     ],
+     [
+      "add",
+      "$C",
+      "stability",
+      6
+     ],
+     [
+      "add",
+      "$C",
+      "rival_pull",
+      -15
+     ]
+    ],
+    "advisors": {
+     "treasury": -1,
+     "state": 3
+    }
+   },
+   {
+    "label": "Demand tough reforms first",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "growth",
+      0.5
+     ],
+     [
+      "add",
+      "$C",
+      "stability",
+      -4
+     ],
+     [
+      "add",
+      "$C",
+      "relation",
+      -3
+     ]
+    ],
+    "advisors": {
+     "treasury": 3
+    }
+   },
+   {
+    "label": "Let it default",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "stability",
+      -10
+     ],
+     [
+      "mul",
+      "$C",
+      "gdp",
+      0.95
+     ]
+    ],
+    "advisors": {
+     "treasury": 1,
+     "state": -2
+    }
+   }
+  ],
+  "minor": true
+ },
+ {
+  "id": "spy_ring",
+  "template": true,
+  "speaker": "cia",
+  "chance": 0.07,
+  "if": [
+   [
+    "self",
+    "relation",
+    "<",
+    -20
+   ],
+   [
+    "self",
+    "military",
+    ">",
+    30
+   ]
+  ],
+  "title": "Spy ring from $NAME uncovered",
+  "text": "The FBI has arrested four people passing defence secrets to $NAME.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Expel their diplomats",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "relation",
+      -10
+     ],
+     [
+      "us",
+      "approval",
+      2
+     ]
+    ],
+    "advisors": {
+     "nsa": 2,
+     "cia": 1
+    }
+   },
+   {
+    "label": "Swap them quietly",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "relation",
+      2
+     ]
+    ],
+    "advisors": {
+     "cia": 3,
+     "chief": -1
+    }
+   },
+   {
+    "label": "Make a public example",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "relation",
+      -15
+     ],
+     [
+      "us",
+      "approval",
+      3
+     ],
+     [
+      "us",
+      "standing",
+      -1
+     ]
+    ],
+    "advisors": {
+     "chief": 2,
+     "state": -2
+    }
+   }
+  ],
+  "minor": true
+ },
+ {
+  "id": "defector",
+  "template": true,
+  "speaker": "cia",
+  "chance": 0.06,
+  "if": [
+   [
+    "self",
+    "relation",
+    "<",
+    -30
+   ]
+  ],
+  "title": "A defector from $NAME",
+  "text": "A senior officer from $NAME has walked into a US consulate asking for asylum. He claims to carry military secrets.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Grant asylum",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "relation",
+      -10
+     ],
+     [
+      "add",
+      "$C",
+      "stability",
+      -3
+     ],
+     [
+      "trust",
+      "cia",
+      5
+     ]
+    ],
+    "advisors": {
+     "cia": 2,
+     "state": -1
+    }
+   },
+   {
+    "label": "Hand him back",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "relation",
+      6
+     ],
+     [
+      "us",
+      "standing",
+      -3
+     ]
+    ],
+    "advisors": {
+     "cia": -5,
+     "state": 1
+    }
+   }
+  ],
+  "minor": true
+ },
+ {
+  "id": "wmd_program",
+  "template": true,
+  "speaker": "cia",
+  "chance": 0.05,
+  "if": [
+   [
+    "self",
+    "ambition",
+    ">",
+    60
+   ],
+   [
+    "self",
+    "military",
+    ">",
+    40
+   ],
+   [
+    "not_state",
+    "$C",
+    "nuclear"
+   ]
+  ],
+  "title": "Secret weapons programme in $NAME",
+  "text": "Satellite photos suggest $NAME is building a uranium enrichment site under a mountain.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Push for inspections (10 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -10
+     ],
+     [
+      "chance",
+      0.5,
+      [
+       [
+        "add",
+        "$C",
+        "ambition",
+        -12
+       ],
+       [
+        "log",
+        "Inspectors gain access to the site."
+       ]
+      ],
+      [
+       [
+        "log",
+        "Inspectors are turned away."
+       ]
+      ]
+     ]
+    ],
+    "advisors": {
+     "un": 4,
+     "state": 3
+    }
+   },
+   {
+    "label": "Sanctions",
+    "effects": [
+     [
+      "sanction",
+      "$C"
+     ]
+    ],
+    "advisors": {
+     "treasury": 2,
+     "state": 1
+    }
+   },
+   {
+    "label": "Covert sabotage ($1bn covert)",
+    "effects": [
+     [
+      "funds",
+      "covert",
+      -1
+     ],
+     [
+      "add",
+      "$C",
+      "military",
+      -5
+     ],
+     [
+      "chance",
+      0.25,
+      [
+       [
+        "us",
+        "scandal",
+        15
+       ],
+       [
+        "us",
+        "standing",
+        -6
+       ],
+       [
+        "log",
+        "The sabotage campaign is exposed."
+       ]
+      ],
+      []
+     ]
+    ],
+    "advisors": {
+     "cia": 4,
+     "state": -2
+    }
+   },
+   {
+    "label": "Ignore it",
+    "effects": [
+     [
+      "chance",
+      0.3,
+      [
+       [
+        "set",
+        "$C",
+        "nuclear",
+        true
+       ],
+       [
+        "log",
+        "$NAME tests a nuclear device."
+       ]
+      ],
+      []
+     ]
+    ],
+    "advisors": {
+     "cia": -4,
+     "nsa": -4
+    }
+   }
+  ]
+ },
+ {
+  "id": "ally_arms",
+  "template": true,
+  "speaker": "defense",
+  "chance": 0.08,
+  "if": [
+   [
+    "self",
+    "relation",
+    ">",
+    50
+   ],
+   [
+    "self",
+    "military",
+    "<",
+    45
+   ],
+   [
+    "not_state",
+    "$C",
+    "war"
+   ]
+  ],
+  "title": "$NAME asks for weapons",
+  "text": "Our ally $NAME says a neighbour is arming fast and asks for air-defence systems.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Send a package (from defense funds)",
+    "effects": [
+     [
+      "funds",
+      "defense",
+      -1
+     ],
+     [
+      "add",
+      "$C",
+      "military",
+      6
+     ],
+     [
+      "add",
+      "$C",
+      "relation",
+      6
+     ]
+    ],
+    "advisors": {
+     "defense": 3,
+     "treasury": -1
+    }
+   },
+   {
+    "label": "Offer a training mission",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "military",
+      2
+     ],
+     [
+      "add",
+      "$C",
+      "relation",
+      3
+     ]
+    ],
+    "advisors": {
+     "defense": 1
+    }
+   },
+   {
+    "label": "Decline",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "relation",
+      -6
+     ]
+    ],
+    "advisors": {
+     "defense": -2
+    }
+   }
+  ],
+  "minor": true
+ },
+ {
+  "id": "trade_war",
+  "template": true,
+  "speaker": "treasury",
+  "chance": 0.06,
+  "if": [
+   [
+    "self",
+    "relation",
+    ">",
+    0
+   ],
+   [
+    "self",
+    "gdp",
+    ">",
+    400
+   ]
+  ],
+  "title": "$NAME slaps tariffs on US goods",
+  "text": "$NAME has hit American farm and steel exports with 25 percent tariffs.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Retaliate in kind",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "relation",
+      -10
+     ],
+     [
+      "us",
+      "approval",
+      1
+     ],
+     [
+      "mul",
+      "$C",
+      "gdp",
+      0.995
+     ]
+    ],
+    "advisors": {
+     "treasury": -1,
+     "chief": 2
+    }
+   },
+   {
+    "label": "Negotiate (5 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -5
+     ],
+     [
+      "add",
+      "$C",
+      "relation",
+      3
+     ]
+    ],
+    "advisors": {
+     "treasury": 3,
+     "state": 2
+    }
+   },
+   {
+    "label": "Let it go",
+    "effects": [
+     [
+      "us",
+      "approval",
+      -2
+     ]
+    ],
+    "advisors": {
+     "chief": -2
+    }
+   }
+  ],
+  "minor": true
+ },
+ {
+  "id": "journalist",
+  "template": true,
+  "speaker": "state",
+  "chance": 0.06,
+  "if": [
+   [
+    "self",
+    "freedom",
+    "<",
+    30
+   ],
+   [
+    "self",
+    "relation",
+    "<",
+    30
+   ]
+  ],
+  "title": "American reporter jailed in $NAME",
+  "text": "A US reporter has been sentenced to twelve years in $NAME for 'spreading false information'.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Demand release publicly",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "relation",
+      -6
+     ],
+     [
+      "chance",
+      0.35,
+      [
+       [
+        "us",
+        "approval",
+        3
+       ],
+       [
+        "log",
+        "The reporter is freed."
+       ]
+      ],
+      []
+     ]
+    ],
+    "advisors": {
+     "state": 1,
+     "chief": 1
+    }
+   },
+   {
+    "label": "Negotiate a prisoner swap",
+    "effects": [
+     [
+      "chance",
+      0.7,
+      [
+       [
+        "us",
+        "approval",
+        2
+       ],
+       [
+        "log",
+        "A prisoner swap frees the reporter."
+       ]
+      ],
+      []
+     ],
+     [
+      "us",
+      "standing",
+      -1
+     ]
+    ],
+    "advisors": {
+     "cia": 2
+    }
+   },
+   {
+    "label": "Sanction the officials responsible",
+    "effects": [
+     [
+      "sanction",
+      "$C"
+     ]
+    ],
+    "advisors": {
+     "un": 2,
+     "treasury": 1
+    }
+   }
+  ],
+  "minor": true
+ },
+ {
+  "id": "referendum",
+  "template": true,
+  "speaker": "state",
+  "chance": 0.04,
+  "if": [
+   [
+    "self",
+    "stability",
+    "<",
+    55
+   ],
+   [
+    "self",
+    "pop",
+    ">",
+    10
+   ],
+   [
+    "self",
+    "freedom",
+    ">",
+    35
+   ]
+  ],
+  "title": "Separatists call a referendum in $NAME",
+  "text": "A restive province of $NAME has scheduled an independence vote. The capital calls it illegal.",
+  "effects": [
+   [
+    "add",
+    "$C",
+    "stability",
+    -5
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Back $NAME's unity",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "relation",
+      8
+     ],
+     [
+      "us",
+      "standing",
+      -1
+     ]
+    ],
+    "advisors": {
+     "state": 2
+    }
+   },
+   {
+    "label": "Call for talks",
+    "effects": [
+     [
+      "us",
+      "standing",
+      2
+     ],
+     [
+      "add",
+      "$C",
+      "stability",
+      2
+     ]
+    ],
+    "advisors": {
+     "un": 3,
+     "state": 1
+    }
+   },
+   {
+    "label": "Back self-determination",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "relation",
+      -20
+     ],
+     [
+      "add",
+      "$C",
+      "stability",
+      -10
+     ]
+    ],
+    "advisors": {
+     "un": 1,
+     "state": -2
+    }
+   }
+  ]
+ },
+ {
+  "id": "sports_host",
+  "template": true,
+  "speaker": "chief",
+  "chance": 0.04,
+  "if": [
+   [
+    "self",
+    "pop",
+    ">",
+    20
+   ],
+   [
+    "self",
+    "gdp",
+    ">",
+    300
+   ]
+  ],
+  "title": "$NAME wins the World Games",
+  "text": "$NAME will host the next World Games. Its government is inviting heads of state to the opening ceremony.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Attend the opening ceremony (2 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -2
+     ],
+     [
+      "add",
+      "$C",
+      "relation",
+      6
+     ],
+     [
+      "us",
+      "approval",
+      1
+     ]
+    ],
+    "advisors": {
+     "state": 2,
+     "chief": 1
+    }
+   },
+   {
+    "label": "Send the Vice President",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "relation",
+      2
+     ]
+    ],
+    "advisors": {}
+   },
+   {
+    "label": "Boycott over human rights",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "relation",
+      -12
+     ],
+     [
+      "us",
+      "standing",
+      2
+     ]
+    ],
+    "advisors": {
+     "un": 2,
+     "state": -1
+    }
+   }
+  ],
+  "minor": true
+ },
+ {
+  "id": "outbreak",
+  "template": true,
+  "speaker": "un",
+  "chance": 0.06,
+  "if": [
+   [
+    "self",
+    "hunger",
+    ">",
+    30
+   ],
+   [
+    "self",
+    "pop",
+    ">",
+    5
+   ]
+  ],
+  "title": "Outbreak of a deadly virus in $NAME",
+  "text": "A haemorrhagic fever is spreading in $NAME. Doctors fear it will reach the capital.",
+  "effects": [
+   [
+    "add",
+    "$C",
+    "stability",
+    -4
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Send CDC teams and supplies ($1bn)",
+    "effects": [
+     [
+      "funds",
+      "aid",
+      -1
+     ],
+     [
+      "add",
+      "$C",
+      "relation",
+      10
+     ],
+     [
+      "add",
+      "$C",
+      "stability",
+      3
+     ],
+     [
+      "us",
+      "standing",
+      3
+     ]
+    ],
+    "advisors": {
+     "un": 4,
+     "state": 2
+    }
+   },
+   {
+    "label": "Travel ban",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "relation",
+      -6
+     ],
+     [
+      "us",
+      "approval",
+      1
+     ]
+    ],
+    "advisors": {
+     "chief": 2,
+     "un": -2
+    }
+   },
+   {
+    "label": "Monitor",
+    "effects": [
+     [
+      "chance",
+      0.3,
+      [
+       [
+        "us",
+        "approval",
+        -4
+       ],
+       [
+        "log",
+        "Cases appear in the US. The public is alarmed."
+       ]
+      ],
+      []
+     ]
+    ],
+    "advisors": {
+     "un": -2
+    }
+   }
+  ],
+  "minor": true
+ },
+ {
+  "id": "mercenaries",
+  "template": true,
+  "speaker": "cia",
+  "chance": 0.08,
+  "if": [
+   [
+    "self_state",
+    "civil_war"
+   ],
+   [
+    "self",
+    "relation",
+    "<",
+    30
+   ]
+  ],
+  "title": "Foreign mercenaries in $NAME",
+  "text": "A private army with ties to a rival power is fighting in $NAME in exchange for gold mines.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Sanction the company's network",
+    "effects": [
+     [
+      "us",
+      "standing",
+      1
+     ],
+     [
+      "add",
+      "$C",
+      "rival_pull",
+      -10
+     ]
+    ],
+    "advisors": {
+     "treasury": 2,
+     "cia": 1
+    }
+   },
+   {
+    "label": "Arm the other side ($1bn covert)",
+    "effects": [
+     [
+      "funds",
+      "covert",
+      -1
+     ],
+     [
+      "add",
+      "$C",
+      "stability",
+      -4
+     ],
+     [
+      "chance",
+      0.25,
+      [
+       [
+        "us",
+        "scandal",
+        10
+       ],
+       [
+        "log",
+        "Arms shipments to $NAME are exposed."
+       ]
+      ],
+      []
+     ]
+    ],
+    "advisors": {
+     "cia": 3,
+     "state": -2
+    }
+   },
+   {
+    "label": "Stay out",
+    "effects": [],
+    "advisors": {}
+   }
+  ],
+  "minor": true
+ },
+ {
+  "id": "embassy_storm",
+  "template": true,
+  "speaker": "state",
+  "chance": 0.05,
+  "if": [
+   [
+    "self",
+    "relation",
+    "<",
+    -50
+   ],
+   [
+    "self",
+    "stability",
+    "<",
+    50
+   ]
+  ],
+  "title": "Mob storms the US embassy in $NAME",
+  "text": "Protesters have breached the US embassy compound in $NAME. Marines are holding the inner building.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Evacuate by helicopter",
+    "effects": [
+     [
+      "us",
+      "approval",
+      -2
+     ]
+    ],
+    "advisors": {
+     "defense": 1,
+     "chief": 1
+    }
+   },
+   {
+    "label": "Send reinforcements (10 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -10
+     ],
+     [
+      "add",
+      "$C",
+      "relation",
+      -8
+     ],
+     [
+      "us",
+      "approval",
+      2
+     ]
+    ],
+    "advisors": {
+     "defense": 3,
+     "state": -1
+    }
+   },
+   {
+    "label": "Demand $NAME restore order",
+    "effects": [
+     [
+      "chance",
+      0.5,
+      [
+       [
+        "log",
+        "Local police clear the compound."
+       ]
+      ],
+      [
+       [
+        "us",
+        "approval",
+        -5
+       ],
+       [
+        "log",
+        "The embassy is overrun; staff are taken."
+       ]
+      ]
+     ]
+    ],
+    "advisors": {
+     "state": 2
+    }
+   }
+  ]
+ },
+ {
+  "id": "cyberattack",
+  "template": true,
+  "speaker": "nsa",
+  "chance": 0.1,
+  "if": [
+   [
+    "self",
+    "relation",
+    "<",
+    -40
+   ],
+   [
+    "self",
+    "military",
+    ">",
+    45
+   ]
+  ],
+  "title": "Cyberattack on US infrastructure",
+  "text": "Hackers linked to $NAME have disrupted pipelines and hospital systems across several states.",
+  "effects": [
+   [
+    "us",
+    "approval",
+    -2
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Retaliate in kind (5 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -5
+     ],
+     [
+      "mul",
+      "$C",
+      "gdp",
+      0.995
+     ],
+     [
+      "add",
+      "$C",
+      "relation",
+      -10
+     ]
+    ],
+    "advisors": {
+     "cia": 3,
+     "nsa": 3,
+     "state": -1
+    }
+   },
+   {
+    "label": "Name and sanction the units",
+    "effects": [
+     [
+      "sanction",
+      "$C"
+     ]
+    ],
+    "advisors": {
+     "treasury": 1,
+     "state": 2
+    }
+   },
+   {
+    "label": "Harden defences quietly ($2bn)",
+    "effects": [
+     [
+      "funds",
+      "domestic",
+      -2
+     ]
+    ],
+    "advisors": {
+     "chief": 1
+    }
+   }
+  ],
+  "system": "cyber"
+ },
+ {
+  "id": "drought",
+  "template": true,
+  "speaker": "un",
+  "chance": 0.08,
+  "if": [
+   [
+    "self",
+    "hunger",
+    ">",
+    30
+   ],
+   [
+    "self",
+    "hunger",
+    "<",
+    70
+   ]
+  ],
+  "title": "Record drought in $NAME",
+  "text": "A third failed rainy season has hit harvests across $NAME. Food prices have doubled.",
+  "effects": [
+   [
+    "add",
+    "$C",
+    "hunger",
+    12
+   ],
+   [
+    "add",
+    "$C",
+    "stability",
+    -4
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Climate resilience package ($2bn)",
+    "effects": [
+     [
+      "funds",
+      "aid",
+      -2
+     ],
+     [
+      "add",
+      "$C",
+      "hunger",
+      -14
+     ],
+     [
+      "add",
+      "$C",
+      "relation",
+      8
+     ],
+     [
+      "us",
+      "standing",
+      2
+     ]
+    ],
+    "advisors": {
+     "un": 3,
+     "state": 2
+    }
+   },
+   {
+    "label": "Decline",
+    "effects": [],
+    "advisors": {
+     "un": -2
+    }
+   }
+  ],
+  "system": "climate",
+  "minor": true
+ },
+ {
+  "id": "ai_deepfake",
+  "template": true,
+  "speaker": "nsa",
+  "chance": 0.05,
+  "if": [
+   [
+    "self",
+    "relation",
+    "<",
+    -30
+   ],
+   [
+    "self",
+    "gdp",
+    ">",
+    500
+   ]
+  ],
+  "title": "Deepfake of the President goes viral",
+  "text": "A convincing fake video of you insulting allies, traced to $NAME, has 200 million views.",
+  "effects": [
+   [
+    "us",
+    "approval",
+    -2
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Expose the operation publicly",
+    "effects": [
+     [
+      "add",
+      "$C",
+      "relation",
+      -8
+     ],
+     [
+      "us",
+      "approval",
+      1
+     ]
+    ],
+    "advisors": {
+     "nsa": 2,
+     "state": 1
+    }
+   },
+   {
+    "label": "Push platforms to label AI content (5 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -5
+     ],
+     [
+      "us",
+      "standing",
+      2
+     ]
+    ],
+    "advisors": {
+     "chief": 2
+    }
+   },
+   {
+    "label": "Laugh it off on late-night TV",
+    "effects": [
+     [
+      "chance",
+      0.6,
+      [
+       [
+        "us",
+        "approval",
+        3
+       ]
+      ],
+      [
+       [
+        "us",
+        "approval",
+        -3
+       ]
+      ]
+     ]
+    ],
+    "advisors": {
+     "chief": 1
+    }
+   }
+  ],
+  "system": "cyber"
+ },
+ {
+  "id": "shutdown",
+  "speaker": "chief",
+  "when": {
+   "after": "1900-01",
+   "chance": 0.05,
+   "if": [
+    [
+     "us",
+     "congress",
+     "<",
+     50
+    ]
+   ]
+  },
+  "repeat": 30,
+  "title": "Congress threatens a shutdown",
+  "text": "Budget talks have collapsed. Without a deal, the federal government shuts down on Friday.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Cut a deal (10 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -10
+     ]
+    ],
+    "advisors": {
+     "chief": 3,
+     "treasury": 1
+    }
+   },
+   {
+    "label": "Hold firm",
+    "effects": [
+     [
+      "chance",
+      0.5,
+      [
+       [
+        "us",
+        "approval",
+        3
+       ],
+       [
+        "us",
+        "congress",
+        4
+       ],
+       [
+        "log",
+        "Congress blinks; the budget passes."
+       ]
+      ],
+      [
+       [
+        "us",
+        "approval",
+        -5
+       ],
+       [
+        "log",
+        "The shutdown drags on for three weeks."
+       ]
+      ]
+     ]
+    ],
+    "advisors": {
+     "chief": -2
+    }
+   }
+  ]
+ },
+ {
+  "id": "aide_scandal",
+  "speaker": "chief",
+  "when": {
+   "after": "1900-01",
+   "chance": 0.04
+  },
+  "repeat": 30,
+  "title": "White House aide in hot water",
+  "text": "A senior aide is accused of trading on inside information. Reporters want to know what you knew.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Fire the aide today",
+    "effects": [
+     [
+      "us",
+      "scandal",
+      -5
+     ],
+     [
+      "trust",
+      "chief",
+      -3
+     ]
+    ],
+    "advisors": {
+     "chief": -1
+    }
+   },
+   {
+    "label": "Stand by the aide",
+    "effects": [
+     [
+      "us",
+      "scandal",
+      12
+     ],
+     [
+      "chance",
+      0.5,
+      [
+       [
+        "us",
+        "approval",
+        -3
+       ]
+      ],
+      []
+     ]
+    ],
+    "advisors": {
+     "chief": 2
+    }
+   }
+  ]
+ },
+ {
+  "id": "court_vacancy",
+  "speaker": "chief",
+  "when": {
+   "after": "1900-01",
+   "chance": 0.025
+  },
+  "repeat": 48,
+  "title": "A Supreme Court seat opens",
+  "text": "A justice has announced retirement. Both parties are mobilising for the confirmation fight.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Nominate a consensus moderate",
+    "effects": [
+     [
+      "us",
+      "congress",
+      5
+     ]
+    ],
+    "advisors": {
+     "chief": 2
+    }
+   },
+   {
+    "label": "Nominate a firm ally",
+    "effects": [
+     [
+      "us",
+      "approval",
+      2
+     ],
+     [
+      "us",
+      "congress",
+      -6
+     ],
+     [
+      "us",
+      "political_capital",
+      -5
+     ]
+    ],
+    "advisors": {
+     "chief": -1
+    }
+   }
+  ],
+  "minor": true
+ },
+ {
+  "id": "recession",
+  "speaker": "treasury",
+  "when": {
+   "after": "1900-01",
+   "chance": 0.03
+  },
+  "repeat": 36,
+  "title": "Recession hits",
+  "text": "GDP has shrunk for two quarters running. Layoffs are spreading across the Midwest.",
+  "effects": [
+   [
+    "us",
+    "approval",
+    -4
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Stimulus package",
+    "effects": [
+     [
+      "funds",
+      "domestic",
+      -5
+     ],
+     [
+      "us",
+      "approval",
+      3
+     ],
+     [
+      "budget_base",
+      1.02
+     ]
+    ],
+    "advisors": {
+     "chief": 3,
+     "treasury": -3
+    }
+   },
+   {
+    "label": "Hold the line on spending",
+    "effects": [
+     [
+      "us",
+      "approval",
+      -2
+     ]
+    ],
+    "advisors": {
+     "treasury": 3,
+     "chief": -2
+    }
+   }
+  ]
+ },
+ {
+  "id": "boom",
+  "speaker": "treasury",
+  "when": {
+   "after": "1900-01",
+   "chance": 0.03
+  },
+  "repeat": 36,
+  "title": "The economy is roaring",
+  "text": "Unemployment is at a generation low and markets are at record highs.",
+  "effects": [
+   [
+    "us",
+    "approval",
+    2
+   ],
+   [
+    "us",
+    "political_capital",
+    5
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Take credit at a rally",
+    "effects": [
+     [
+      "us",
+      "approval",
+      3
+     ]
+    ],
+    "advisors": {
+     "chief": 2
+    }
+   },
+   {
+    "label": "Pay down the debt",
+    "effects": [
+     [
+      "us",
+      "approval",
+      1
+     ],
+     [
+      "us",
+      "congress",
+      3
+     ]
+    ],
+    "advisors": {
+     "treasury": 3
+    }
+   }
+  ],
+  "minor": true
+ },
+ {
+  "id": "leak",
+  "speaker": "cia",
+  "when": {
+   "after": "1900-01",
+   "chance": 0.035
+  },
+  "repeat": 30,
+  "title": "Classified cables leaked",
+  "text": "Thousands of diplomatic cables have been published online, embarrassing a dozen allies.",
+  "effects": [
+   [
+    "us",
+    "standing",
+    -3
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Prosecute the leaker",
+    "effects": [
+     [
+      "us",
+      "standing",
+      -1
+     ]
+    ],
+    "advisors": {
+     "cia": 3,
+     "state": 1
+    }
+   },
+   {
+    "label": "Apologise to allies (5 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -5
+     ],
+     [
+      "us",
+      "standing",
+      2
+     ]
+    ],
+    "advisors": {
+     "state": 3
+    }
+   },
+   {
+    "label": "Shrug it off",
+    "effects": [
+     [
+      "us",
+      "standing",
+      -4
+     ]
+    ],
+    "advisors": {
+     "state": -2
+    }
+   }
+  ],
+  "minor": true
+ },
+ {
+  "id": "home_storm",
+  "speaker": "chief",
+  "when": {
+   "after": "1900-01",
+   "chance": 0.04
+  },
+  "repeat": 24,
+  "title": "Hurricane strikes the Gulf Coast",
+  "text": "A major hurricane has flooded coastal cities. Hundreds of thousands are without power.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Fly in and lead the response ($3bn)",
+    "effects": [
+     [
+      "funds",
+      "domestic",
+      -3
+     ],
+     [
+      "us",
+      "approval",
+      4
+     ]
+    ],
+    "advisors": {
+     "chief": 3
+    }
+   },
+   {
+    "label": "Let FEMA handle it",
+    "effects": [
+     [
+      "chance",
+      0.5,
+      [],
+      [
+       [
+        "us",
+        "approval",
+        -5
+       ],
+       [
+        "log",
+        "The federal response is called slow and disorganised."
+       ]
+      ]
+     ]
+    ],
+    "advisors": {
+     "chief": -2
+    }
+   }
+  ]
+ },
+ {
+  "id": "oil_shock",
+  "speaker": "treasury",
+  "when": {
+   "after": "1900-01",
+   "chance": 0.025
+  },
+  "repeat": 36,
+  "title": "Oil prices spike",
+  "text": "Crude has jumped 40 percent in a month. Gasoline prices are dominating the evening news.",
+  "effects": [
+   [
+    "us",
+    "approval",
+    -3
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Release the strategic reserve (5 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -5
+     ],
+     [
+      "us",
+      "approval",
+      2
+     ]
+    ],
+    "advisors": {
+     "treasury": 1,
+     "chief": 2
+    }
+   },
+   {
+    "label": "Lean on producers to pump more",
+    "effects": [
+     [
+      "add",
+      "SAU",
+      "relation",
+      -5
+     ],
+     [
+      "us",
+      "approval",
+      1
+     ]
+    ],
+    "advisors": {
+     "state": -1
+    }
+   },
+   {
+    "label": "Ride it out",
+    "effects": [],
+    "advisors": {
+     "treasury": 1
+    }
+   }
+  ]
+ },
+ {
+  "id": "state_dinner",
+  "speaker": "state",
+  "when": {
+   "after": "1900-01",
+   "chance": 0.03
+  },
+  "repeat": 24,
+  "title": "A state dinner goes viral",
+  "text": "Your toast at last night's state dinner, featuring an ill-advised joke about cheese, is everywhere.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Lean in: cheese summit",
+    "effects": [
+     [
+      "us",
+      "approval",
+      2
+     ]
+    ],
+    "advisors": {
+     "chief": 1
+    }
+   },
+   {
+    "label": "Issue a dignified clarification",
+    "effects": [
+     [
+      "us",
+      "approval",
+      -1
+     ]
+    ],
+    "advisors": {
+     "state": 1
+    }
+   }
+  ],
+  "minor": true
+ },
+ {
+  "id": "space_race",
+  "speaker": "chief",
+  "when": {
+   "after": "1900-01",
+   "chance": 0.02
+  },
+  "repeat": 60,
+  "title": "Space programme at a crossroads",
+  "text": "NASA wants funding for a crewed mission. Critics call it a vanity project.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Fund it ($4bn)",
+    "effects": [
+     [
+      "funds",
+      "domestic",
+      -4
+     ],
+     [
+      "us",
+      "approval",
+      3
+     ],
+     [
+      "us",
+      "standing",
+      2
+     ]
+    ],
+    "advisors": {
+     "chief": 1,
+     "treasury": -2
+    }
+   },
+   {
+    "label": "Not this year",
+    "effects": [],
+    "advisors": {
+     "treasury": 1
+    }
+   }
+  ],
+  "minor": true
+ },
+ {
+  "id": "summit",
+  "speaker": "state",
+  "when": {
+   "after": "1900-01",
+   "chance": 0.03
+  },
+  "repeat": 24,
+  "title": "Allies call a summit",
+  "text": "Allied leaders want a summit on burden-sharing. They expect you to show up with something.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Pledge new commitments (10 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -10
+     ],
+     [
+      "us",
+      "standing",
+      5
+     ],
+     [
+      "us",
+      "approval",
+      1
+     ]
+    ],
+    "advisors": {
+     "state": 3,
+     "un": 2
+    }
+   },
+   {
+    "label": "Demand they spend more",
+    "effects": [
+     [
+      "us",
+      "approval",
+      2
+     ],
+     [
+      "us",
+      "standing",
+      -3
+     ]
+    ],
+    "advisors": {
+     "defense": 2,
+     "state": -2
+    }
+   },
+   {
+    "label": "Skip it",
+    "effects": [
+     [
+      "us",
+      "standing",
+      -4
+     ]
+    ],
+    "advisors": {
+     "state": -3
+    }
+   }
+  ]
+ },
+ {
+  "id": "climate_summit",
+  "speaker": "un",
+  "when": {
+   "after": "1900-01",
+   "chance": 0.03,
+   "if": [
+    [
+     "system",
+     "climate"
+    ]
+   ]
+  },
+  "repeat": 36,
+  "title": "Global climate summit",
+  "text": "The world is meeting to set new emissions targets. Without US commitments, a deal is unlikely.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Commit to deep cuts (10 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -10
+     ],
+     [
+      "us",
+      "standing",
+      7
+     ],
+     [
+      "us",
+      "approval",
+      -1
+     ]
+    ],
+    "advisors": {
+     "un": 4,
+     "state": 3,
+     "treasury": -2
+    }
+   },
+   {
+    "label": "Modest pledge",
+    "effects": [
+     [
+      "us",
+      "standing",
+      2
+     ]
+    ],
+    "advisors": {
+     "un": 1
+    }
+   },
+   {
+    "label": "Walk out",
+    "effects": [
+     [
+      "us",
+      "standing",
+      -6
+     ],
+     [
+      "us",
+      "approval",
+      1
+     ]
+    ],
+    "advisors": {
+     "un": -4
+    }
+   }
+  ],
+  "system": "climate"
+ },
+ {
+  "id": "election_hack",
+  "speaker": "nsa",
+  "when": {
+   "after": "1900-01",
+   "chance": 0.04,
+   "if": [
+    [
+     "system",
+     "cyber"
+    ]
+   ]
+  },
+  "repeat": 48,
+  "title": "Foreign meddling in US elections",
+  "text": "Intelligence agencies report a coordinated foreign campaign to sway voters with fake accounts.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Brief the public and sanction (5 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -5
+     ],
+     [
+      "us",
+      "approval",
+      2
+     ]
+    ],
+    "advisors": {
+     "nsa": 3,
+     "cia": 2
+    }
+   },
+   {
+    "label": "Handle it quietly",
+    "effects": [
+     [
+      "chance",
+      0.4,
+      [
+       [
+        "us",
+        "scandal",
+        10
+       ],
+       [
+        "log",
+        "Critics say you buried the intelligence."
+       ]
+      ],
+      []
+     ]
+    ],
+    "advisors": {
+     "cia": 1,
+     "chief": -1
+    }
+   }
+  ],
+  "system": "cyber"
+ },
+ {
+  "id": "tech_boom",
+  "speaker": "treasury",
+  "when": {
+   "after": "1900-01",
+   "chance": 0.025,
+   "if": [
+    [
+     "system",
+     "cyber"
+    ]
+   ]
+  },
+  "repeat": 48,
+  "title": "New chip plant opens in Arizona",
+  "text": "A $40bn semiconductor plant has opened, bringing 6,000 jobs and less dependence on Asian supply.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Cut the ribbon",
+    "effects": [
+     [
+      "us",
+      "approval",
+      2
+     ]
+    ],
+    "advisors": {
+     "chief": 2
+    }
+   },
+   {
+    "label": "Announce more subsidies ($3bn)",
+    "effects": [
+     [
+      "funds",
+      "domestic",
+      -3
+     ],
+     [
+      "us",
+      "approval",
+      3
+     ]
+    ],
+    "advisors": {
+     "treasury": -2
+    }
+   }
+  ],
+  "minor": true
+ }
+]

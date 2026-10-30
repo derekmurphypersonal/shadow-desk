@@ -1,0 +1,44 @@
+{
+ "SUN": [
+  "RUS",
+  "UKR",
+  "BLR",
+  "KAZ",
+  "UZB",
+  "TKM",
+  "KGZ",
+  "TJK",
+  "GEO",
+  "ARM",
+  "AZE",
+  "MDA",
+  "LTU",
+  "LVA",
+  "EST"
+ ],
+ "YUG": [
+  "SRB",
+  "HRV",
+  "BIH",
+  "SVN",
+  "MKD",
+  "MNE",
+  "KOS"
+ ],
+ "CSK": [
+  "CZE",
+  "SVK"
+ ],
+ "ETH": [
+  "ETH",
+  "ERI"
+ ],
+ "SDN": [
+  "SDN",
+  "SDS"
+ ],
+ "IDN": [
+  "IDN",
+  "TLS"
+ ]
+}

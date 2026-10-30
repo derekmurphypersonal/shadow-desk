@@ -1,0 +1,1813 @@
+[
+ {
+  "id": "ukraine_talks",
+  "when": {
+   "date": "2027-01",
+   "if": [
+    [
+     "at_war",
+     "UKR"
+    ]
+   ]
+  },
+  "title": "Ceasefire talks over Ukraine",
+  "text": "European capitals are pushing for a ceasefire along current lines, backed by security guarantees. Kyiv wants firm commitments; Moscow wants sanctions relief.",
+  "choices": [
+   {
+    "label": "Back a ceasefire with security guarantees (20 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -20
+     ],
+     [
+      "chance",
+      0.45,
+      [
+       [
+        "end_war",
+        "UKR"
+       ],
+       [
+        "us",
+        "treaties",
+        1
+       ],
+       [
+        "us",
+        "approval",
+        3
+       ],
+       [
+        "log",
+        "A ceasefire takes hold in Ukraine."
+       ]
+      ],
+      [
+       [
+        "log",
+        "Talks collapse; fighting resumes."
+       ]
+      ]
+     ]
+    ],
+    "advisors": {
+     "state": 4,
+     "un": 3
+    }
+   },
+   {
+    "label": "Increase arms to Ukraine",
+    "effects": [
+     [
+      "add",
+      "UKR",
+      "military",
+      8
+     ],
+     [
+      "add",
+      "RUS",
+      "relation",
+      -10
+     ],
+     [
+      "funds",
+      "defense",
+      -3
+     ]
+    ],
+    "advisors": {
+     "defense": 4,
+     "nsa": 2,
+     "treasury": -2
+    }
+   },
+   {
+    "label": "Offer Moscow sanctions relief for a deal",
+    "effects": [
+     [
+      "add",
+      "RUS",
+      "relation",
+      15
+     ],
+     [
+      "add",
+      "UKR",
+      "relation",
+      -15
+     ],
+     [
+      "chance",
+      0.3,
+      [
+       [
+        "end_war",
+        "UKR"
+       ],
+       [
+        "log",
+        "A ceasefire is signed on Moscow's terms."
+       ]
+      ],
+      []
+     ]
+    ],
+    "advisors": {
+     "state": -2,
+     "treasury": 3,
+     "nsa": -4
+    }
+   }
+  ],
+  "speaker": "state"
+ },
+ {
+  "id": "strait_drills",
+  "when": {
+   "after": "2027-03",
+   "chance": 0.12,
+   "if": [
+    [
+     "stat",
+     "CHN",
+     "ambition",
+     ">",
+     60
+    ]
+   ]
+  },
+  "title": "PLA exercises encircle Taiwan",
+  "text": "Chinese naval and air forces have begun large live-fire exercises around Taiwan, with blockade drills near major ports.",
+  "once": true,
+  "effects": [
+   [
+    "add",
+    "TWN",
+    "stability",
+    -6
+   ],
+   [
+    "add",
+    "JPN",
+    "stability",
+    -2
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Sail a carrier group through the Strait (10 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -10
+     ],
+     [
+      "add",
+      "CHN",
+      "relation",
+      -15
+     ],
+     [
+      "add",
+      "TWN",
+      "relation",
+      10
+     ],
+     [
+      "add",
+      "CHN",
+      "ambition",
+      -5
+     ]
+    ],
+    "advisors": {
+     "defense": 4,
+     "nsa": 3,
+     "state": -2
+    }
+   },
+   {
+    "label": "Quiet diplomacy with Beijing (5 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -5
+     ],
+     [
+      "add",
+      "CHN",
+      "relation",
+      5
+     ],
+     [
+      "add",
+      "CHN",
+      "ambition",
+      -3
+     ]
+    ],
+    "advisors": {
+     "state": 4,
+     "treasury": 2
+    }
+   },
+   {
+    "label": "Statement of concern only",
+    "effects": [
+     [
+      "add",
+      "CHN",
+      "ambition",
+      5
+     ],
+     [
+      "add",
+      "TWN",
+      "relation",
+      -5
+     ]
+    ],
+    "advisors": {
+     "nsa": -3
+    }
+   }
+  ],
+  "speaker": "defense"
+ },
+ {
+  "id": "taiwan_crisis",
+  "when": {
+   "after": "2027-06",
+   "chance": 0.04,
+   "if": [
+    [
+     "stat",
+     "CHN",
+     "ambition",
+     ">",
+     75
+    ],
+    [
+     "stat",
+     "TWN",
+     "stability",
+     "<",
+     70
+    ]
+   ]
+  },
+  "title": "Blockade of Taiwan",
+  "text": "China has declared a 'customs quarantine' around Taiwan. Shipping has stopped; chip supply chains are frozen.",
+  "once": true,
+  "effects": [
+   [
+    "war",
+    "CHN",
+    "TWN",
+    10
+   ],
+   [
+    "us",
+    "approval",
+    -3
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Deploy forces to Taiwan's defence",
+    "effects": [
+     [
+      "deploy",
+      "TWN"
+     ],
+     [
+      "add",
+      "CHN",
+      "relation",
+      -30
+     ]
+    ],
+    "advisors": {
+     "defense": 3,
+     "nsa": 4,
+     "treasury": -3
+    }
+   },
+   {
+    "label": "Sanctions and an allied coalition (15 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -15
+     ],
+     [
+      "sanction",
+      "CHN"
+     ]
+    ],
+    "advisors": {
+     "un": 3,
+     "state": 3,
+     "treasury": -4
+    }
+   },
+   {
+    "label": "Seek a negotiated end (20 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -20
+     ],
+     [
+      "chance",
+      0.4,
+      [
+       [
+        "end_war",
+        "TWN"
+       ],
+       [
+        "log",
+        "The quarantine is lifted after talks."
+       ]
+      ],
+      []
+     ]
+    ],
+    "advisors": {
+     "state": 3,
+     "nsa": -3
+    }
+   }
+  ],
+  "speaker": "nsa"
+ },
+ {
+  "id": "ai_race",
+  "when": {
+   "after": "2027-01",
+   "chance": 0.06
+  },
+  "title": "Rival lab claims an AI breakthrough",
+  "text": "A Chinese lab reports a model matching US frontier systems on key benchmarks, trained on smuggled accelerators.",
+  "once": true,
+  "choices": [
+   {
+    "label": "Tighten chip export controls (10 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -10
+     ],
+     [
+      "add",
+      "CHN",
+      "relation",
+      -8
+     ],
+     [
+      "add",
+      "CHN",
+      "growth",
+      -0.3
+     ],
+     [
+      "add",
+      "TWN",
+      "gdp",
+      -10
+     ]
+    ],
+    "advisors": {
+     "nsa": 3,
+     "treasury": -2
+    }
+   },
+   {
+    "label": "Propose an AI safety summit (5 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -5
+     ],
+     [
+      "add",
+      "CHN",
+      "relation",
+      4
+     ],
+     [
+      "us",
+      "approval",
+      1
+     ]
+    ],
+    "advisors": {
+     "state": 3,
+     "un": 3
+    }
+   },
+   {
+    "label": "Fund domestic compute ($5bn)",
+    "effects": [
+     [
+      "funds",
+      "domestic",
+      -5
+     ],
+     [
+      "us",
+      "approval",
+      2
+     ]
+    ],
+    "advisors": {
+     "chief": 2,
+     "treasury": -1
+    }
+   }
+  ],
+  "speaker": "nsa"
+ },
+ {
+  "id": "sahel_wave",
+  "when": {
+   "after": "2027-02",
+   "chance": 0.08,
+   "if": [
+    [
+     "stat",
+     "MLI",
+     "stability",
+     "<",
+     35
+    ]
+   ]
+  },
+  "title": "Jihadist offensive across the Sahel",
+  "text": "Armed groups have cut roads to Bamako and overrun garrisons in Burkina Faso and Niger. Foreign contractors are withdrawing.",
+  "once": true,
+  "effects": [
+   [
+    "add",
+    "MLI",
+    "stability",
+    -8
+   ],
+   [
+    "add",
+    "BFA",
+    "stability",
+    -8
+   ],
+   [
+    "add",
+    "NER",
+    "stability",
+    -6
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Humanitarian aid via the UN ($3bn)",
+    "effects": [
+     [
+      "funds",
+      "aid",
+      -3
+     ],
+     [
+      "add",
+      "MLI",
+      "hunger",
+      -10
+     ],
+     [
+      "add",
+      "BFA",
+      "hunger",
+      -10
+     ]
+    ],
+    "advisors": {
+     "un": 4,
+     "state": 2
+    }
+   },
+   {
+    "label": "Offer counter-terror support to coastal states",
+    "effects": [
+     [
+      "add",
+      "GHA",
+      "relation",
+      8
+     ],
+     [
+      "add",
+      "CIV",
+      "relation",
+      8
+     ],
+     [
+      "add",
+      "BEN",
+      "relation",
+      8
+     ]
+    ],
+    "advisors": {
+     "defense": 2,
+     "cia": 2
+    }
+   },
+   {
+    "label": "Stay out",
+    "effects": [],
+    "advisors": {
+     "chief": 1,
+     "un": -3
+    }
+   }
+  ],
+  "speaker": "un"
+ },
+ {
+  "id": "sudan_ceasefire",
+  "when": {
+   "after": "2027-01",
+   "chance": 0.05,
+   "if": [
+    [
+     "civil_war",
+     "SDN"
+    ]
+   ]
+  },
+  "title": "Sudan's warring generals open talks",
+  "text": "Saudi and Egyptian mediators have brought both sides to Jeddah. A deal could open aid corridors to millions facing famine.",
+  "once": true,
+  "choices": [
+   {
+    "label": "Lean in with mediation and aid (15 PC, $3bn)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -15
+     ],
+     [
+      "funds",
+      "aid",
+      -3
+     ],
+     [
+      "chance",
+      0.5,
+      [
+       [
+        "civil_war",
+        "SDN",
+        false
+       ],
+       [
+        "add",
+        "SDN",
+        "hunger",
+        -20
+       ],
+       [
+        "us",
+        "treaties",
+        1
+       ],
+       [
+        "log",
+        "A ceasefire is signed in Sudan."
+       ]
+      ],
+      [
+       [
+        "log",
+        "Sudan talks collapse."
+       ]
+      ]
+     ]
+    ],
+    "advisors": {
+     "state": 4,
+     "un": 4
+    }
+   },
+   {
+    "label": "Leave it to regional mediators",
+    "effects": [],
+    "advisors": {
+     "un": -2
+    }
+   }
+  ],
+  "speaker": "un"
+ },
+ {
+  "id": "iran_breakout",
+  "speaker": "cia",
+  "when": {
+   "after": "2027-02",
+   "chance": 0.07,
+   "if": [
+    [
+     "stat",
+     "IRN",
+     "ambition",
+     ">",
+     60
+    ],
+    [
+     "not_state",
+     "IRN",
+     "nuclear"
+    ]
+   ]
+  },
+  "title": "Iran nears a bomb",
+  "text": "Inspectors say Iran has enough highly enriched uranium for several weapons and has barred cameras from key sites.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Negotiate: sanctions relief for limits (15 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -15
+     ],
+     [
+      "chance",
+      0.5,
+      [
+       [
+        "add",
+        "IRN",
+        "ambition",
+        -15
+       ],
+       [
+        "us",
+        "treaties",
+        1
+       ],
+       [
+        "log",
+        "Iran agrees to new limits."
+       ]
+      ],
+      [
+       [
+        "log",
+        "Talks with Iran collapse."
+       ]
+      ]
+     ]
+    ],
+    "advisors": {
+     "state": 4,
+     "un": 3,
+     "nsa": -2
+    }
+   },
+   {
+    "label": "Strike the enrichment sites (20 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -20
+     ],
+     [
+      "add",
+      "IRN",
+      "military",
+      -12
+     ],
+     [
+      "add",
+      "IRN",
+      "relation",
+      -30
+     ],
+     [
+      "add",
+      "IRN",
+      "ambition",
+      -10
+     ],
+     [
+      "us",
+      "standing",
+      -6
+     ],
+     [
+      "us",
+      "approval",
+      2
+     ]
+    ],
+    "advisors": {
+     "defense": 3,
+     "nsa": 4,
+     "state": -4,
+     "un": -5
+    }
+   },
+   {
+    "label": "Maximum sanctions",
+    "effects": [
+     [
+      "sanction",
+      "IRN"
+     ],
+     [
+      "add",
+      "IRN",
+      "stability",
+      -6
+     ]
+    ],
+    "advisors": {
+     "treasury": 2,
+     "state": 1
+    }
+   }
+  ]
+ },
+ {
+  "id": "indo_pak",
+  "speaker": "state",
+  "when": {
+   "after": "2027-01",
+   "chance": 0.04,
+   "if": [
+    [
+     "active",
+     "IND"
+    ],
+    [
+     "active",
+     "PAK"
+    ]
+   ]
+  },
+  "title": "India and Pakistan on the brink",
+  "text": "A massacre of pilgrims in Kashmir has been blamed on militants based in Pakistan. Indian jets are on alert. Both sides have nuclear weapons.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Shuttle diplomacy (15 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -15
+     ],
+     [
+      "add",
+      "IND",
+      "relation",
+      4
+     ],
+     [
+      "add",
+      "PAK",
+      "relation",
+      4
+     ],
+     [
+      "us",
+      "standing",
+      4
+     ],
+     [
+      "us",
+      "approval",
+      1
+     ]
+    ],
+    "advisors": {
+     "state": 4,
+     "un": 3
+    }
+   },
+   {
+    "label": "Back India's right to respond",
+    "effects": [
+     [
+      "add",
+      "IND",
+      "relation",
+      10
+     ],
+     [
+      "add",
+      "PAK",
+      "relation",
+      -20
+     ],
+     [
+      "chance",
+      0.3,
+      [
+       [
+        "war",
+        "IND",
+        "PAK",
+        0
+       ]
+      ],
+      []
+     ]
+    ],
+    "advisors": {
+     "nsa": 1,
+     "state": -3
+    }
+   },
+   {
+    "label": "Urge calm from a distance",
+    "effects": [
+     [
+      "chance",
+      0.15,
+      [
+       [
+        "war",
+        "IND",
+        "PAK",
+        0
+       ]
+      ],
+      []
+     ]
+    ],
+    "advisors": {}
+   }
+  ]
+ },
+ {
+  "id": "korea_missile",
+  "speaker": "defense",
+  "when": {
+   "after": "2027-01",
+   "chance": 0.06
+  },
+  "title": "North Korea fires a missile over Japan",
+  "text": "Pyongyang has launched an intercontinental missile over Japan into the Pacific. Tokyo has activated air-raid sirens.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Joint drills with Seoul and Tokyo",
+    "effects": [
+     [
+      "add",
+      "JPN",
+      "relation",
+      5
+     ],
+     [
+      "add",
+      "KOR",
+      "relation",
+      5
+     ],
+     [
+      "add",
+      "PRK",
+      "relation",
+      -5
+     ]
+    ],
+    "advisors": {
+     "defense": 3
+    }
+   },
+   {
+    "label": "Offer talks without preconditions (10 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -10
+     ],
+     [
+      "chance",
+      0.35,
+      [
+       [
+        "add",
+        "PRK",
+        "ambition",
+        -12
+       ],
+       [
+        "us",
+        "approval",
+        2
+       ],
+       [
+        "log",
+        "A surprise summit with Pyongyang is announced."
+       ]
+      ],
+      []
+     ]
+    ],
+    "advisors": {
+     "state": 3,
+     "nsa": -2
+    }
+   },
+   {
+    "label": "Tighten sanctions",
+    "effects": [
+     [
+      "sanction",
+      "PRK"
+     ]
+    ],
+    "advisors": {
+     "treasury": 1
+    }
+   }
+  ]
+ },
+ {
+  "id": "essequibo",
+  "speaker": "nsa",
+  "when": {
+   "after": "2027-03",
+   "chance": 0.05,
+   "if": [
+    [
+     "active",
+     "VEN"
+    ],
+    [
+     "active",
+     "GUY"
+    ]
+   ]
+  },
+  "title": "Venezuela threatens Guyana",
+  "text": "Caracas has published maps annexing two-thirds of Guyana and moved troops to the border.",
+  "effects": [
+   [
+    "add",
+    "VEN",
+    "ambition",
+    20
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Deploy advisers to Guyana",
+    "effects": [
+     [
+      "deploy",
+      "GUY"
+     ],
+     [
+      "add",
+      "VEN",
+      "relation",
+      -10
+     ]
+    ],
+    "advisors": {
+     "defense": 3,
+     "nsa": 2
+    }
+   },
+   {
+    "label": "Regional diplomacy (5 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -5
+     ],
+     [
+      "add",
+      "VEN",
+      "ambition",
+      -10
+     ]
+    ],
+    "advisors": {
+     "state": 3
+    }
+   },
+   {
+    "label": "Watch and wait",
+    "effects": [
+     [
+      "add",
+      "VEN",
+      "ambition",
+      15
+     ]
+    ],
+    "advisors": {
+     "nsa": -2
+    }
+   }
+  ]
+ },
+ {
+  "id": "arctic",
+  "speaker": "state",
+  "when": {
+   "after": "2027-06",
+   "chance": 0.04
+  },
+  "title": "Arctic standoff",
+  "text": "A Russian icebreaker convoy has escorted survey ships into waters claimed by Canada and Denmark, citing melting sea routes.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Send an Arctic patrol",
+    "effects": [
+     [
+      "add",
+      "RUS",
+      "relation",
+      -6
+     ],
+     [
+      "add",
+      "CAN",
+      "relation",
+      5
+     ],
+     [
+      "add",
+      "DNK",
+      "relation",
+      5
+     ]
+    ],
+    "advisors": {
+     "defense": 3
+    }
+   },
+   {
+    "label": "Propose an Arctic council summit (5 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -5
+     ],
+     [
+      "us",
+      "standing",
+      3
+     ]
+    ],
+    "advisors": {
+     "state": 3,
+     "un": 2
+    }
+   }
+  ]
+ },
+ {
+  "id": "pandemic",
+  "speaker": "un",
+  "when": {
+   "after": "2027-06",
+   "chance": 0.015
+  },
+  "title": "A new pandemic",
+  "text": "A novel respiratory virus is spreading on four continents. Hospitals in several countries are overwhelmed.",
+  "effects": [
+   [
+    "us",
+    "approval",
+    -3
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Lead a global vaccine effort ($5bn)",
+    "effects": [
+     [
+      "funds",
+      "aid",
+      -5
+     ],
+     [
+      "us",
+      "standing",
+      8
+     ],
+     [
+      "us",
+      "approval",
+      2
+     ]
+    ],
+    "advisors": {
+     "un": 5,
+     "state": 3,
+     "treasury": -2
+    }
+   },
+   {
+    "label": "Close the borders",
+    "effects": [
+     [
+      "us",
+      "approval",
+      2
+     ],
+     [
+      "us",
+      "standing",
+      -4
+     ]
+    ],
+    "advisors": {
+     "chief": 2,
+     "un": -3
+    }
+   },
+   {
+    "label": "Downplay it",
+    "effects": [
+     [
+      "chance",
+      0.6,
+      [
+       [
+        "us",
+        "approval",
+        -8
+       ],
+       [
+        "log",
+        "Cases surge across the US."
+       ]
+      ],
+      []
+     ]
+    ],
+    "advisors": {
+     "chief": -2,
+     "un": -4
+    }
+   }
+  ]
+ },
+ {
+  "id": "ukraine_rebuild",
+  "speaker": "treasury",
+  "when": {
+   "after": "2027-03",
+   "chance": 0.2,
+   "if": [
+    [
+     "active",
+     "UKR"
+    ],
+    [
+     "not_state",
+     "UKR",
+     "war"
+    ]
+   ]
+  },
+  "title": "Ukraine reconstruction conference",
+  "text": "Allies are meeting in Warsaw to fund Ukraine's reconstruction. The bill is estimated at half a trillion dollars.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Lead with a major pledge ($3bn)",
+    "effects": [
+     [
+      "funds",
+      "aid",
+      -3
+     ],
+     [
+      "add",
+      "UKR",
+      "stability",
+      8
+     ],
+     [
+      "add",
+      "UKR",
+      "relation",
+      8
+     ],
+     [
+      "us",
+      "standing",
+      4
+     ]
+    ],
+    "advisors": {
+     "state": 3,
+     "treasury": -2
+    }
+   },
+   {
+    "label": "Let Europe lead",
+    "effects": [
+     [
+      "add",
+      "UKR",
+      "relation",
+      -4
+     ]
+    ],
+    "advisors": {
+     "treasury": 2
+    }
+   }
+  ]
+ },
+ {
+  "id": "cartels",
+  "speaker": "nsa",
+  "when": {
+   "after": "2027-01",
+   "chance": 0.05,
+   "if": [
+    [
+     "active",
+     "MEX"
+    ]
+   ]
+  },
+  "title": "Cartel violence spills over the border",
+  "text": "A cartel shootout in a border town has killed four Americans. Fentanyl deaths are at record highs.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Joint task force with Mexico (5 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -5
+     ],
+     [
+      "add",
+      "MEX",
+      "relation",
+      6
+     ],
+     [
+      "add",
+      "MEX",
+      "stability",
+      3
+     ],
+     [
+      "us",
+      "approval",
+      2
+     ]
+    ],
+    "advisors": {
+     "state": 2,
+     "cia": 2
+    }
+   },
+   {
+    "label": "Unilateral drone strikes",
+    "effects": [
+     [
+      "add",
+      "MEX",
+      "relation",
+      -25
+     ],
+     [
+      "us",
+      "approval",
+      3
+     ],
+     [
+      "us",
+      "standing",
+      -5
+     ]
+    ],
+    "advisors": {
+     "nsa": 3,
+     "state": -4
+    }
+   },
+   {
+    "label": "Tariffs until Mexico acts",
+    "effects": [
+     [
+      "add",
+      "MEX",
+      "relation",
+      -10
+     ],
+     [
+      "mul",
+      "MEX",
+      "gdp",
+      0.99
+     ],
+     [
+      "us",
+      "approval",
+      1
+     ]
+    ],
+    "advisors": {
+     "chief": 2,
+     "treasury": -2
+    }
+   }
+  ]
+ },
+ {
+  "id": "africa_debt",
+  "speaker": "treasury",
+  "when": {
+   "after": "2027-04",
+   "chance": 0.05
+  },
+  "title": "Debt wave across Africa",
+  "text": "A dozen African governments say they cannot service loans, many owed to Chinese state banks.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Back a debt-relief deal (10 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -10
+     ],
+     [
+      "us",
+      "standing",
+      5
+     ],
+     [
+      "add",
+      "KEN",
+      "relation",
+      8
+     ],
+     [
+      "add",
+      "ZMB",
+      "relation",
+      8
+     ],
+     [
+      "add",
+      "GHA",
+      "relation",
+      8
+     ],
+     [
+      "add",
+      "ETH",
+      "relation",
+      6
+     ]
+    ],
+    "advisors": {
+     "treasury": 2,
+     "state": 3
+    }
+   },
+   {
+    "label": "Offer US loans instead ($3bn)",
+    "effects": [
+     [
+      "funds",
+      "aid",
+      -3
+     ],
+     [
+      "add",
+      "KEN",
+      "rival_pull",
+      -15
+     ],
+     [
+      "add",
+      "ZMB",
+      "rival_pull",
+      -15
+     ],
+     [
+      "add",
+      "GHA",
+      "rival_pull",
+      -15
+     ]
+    ],
+    "advisors": {
+     "treasury": -1,
+     "state": 2
+    }
+   },
+   {
+    "label": "Not our debt",
+    "effects": [
+     [
+      "us",
+      "standing",
+      -2
+     ]
+    ],
+    "advisors": {
+     "treasury": 1
+    }
+   }
+  ]
+ },
+ {
+  "id": "moon_race",
+  "speaker": "chief",
+  "when": {
+   "after": "2028-01",
+   "chance": 0.04
+  },
+  "title": "Race back to the Moon",
+  "text": "China has announced a crewed lunar landing within three years. NASA says it can get there first with more funding.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Fund the push ($5bn)",
+    "effects": [
+     [
+      "funds",
+      "domestic",
+      -5
+     ],
+     [
+      "us",
+      "approval",
+      3
+     ],
+     [
+      "us",
+      "standing",
+      2
+     ]
+    ],
+    "advisors": {
+     "chief": 2,
+     "treasury": -2
+    }
+   },
+   {
+    "label": "Propose a joint mission (5 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -5
+     ],
+     [
+      "add",
+      "CHN",
+      "relation",
+      6
+     ],
+     [
+      "us",
+      "standing",
+      3
+     ]
+    ],
+    "advisors": {
+     "state": 3,
+     "nsa": -2
+    }
+   }
+  ]
+ },
+ {
+  "id": "panama_drought",
+  "speaker": "treasury",
+  "when": {
+   "after": "2027-05",
+   "chance": 0.04,
+   "if": [
+    [
+     "system",
+     "climate"
+    ]
+   ]
+  },
+  "title": "Drought shrinks the Panama Canal",
+  "text": "Water levels are so low that canal traffic is cut by a third. Shipping costs are soaring.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Fund new reservoirs ($2bn)",
+    "effects": [
+     [
+      "funds",
+      "aid",
+      -2
+     ],
+     [
+      "add",
+      "PAN",
+      "relation",
+      10
+     ]
+    ],
+    "advisors": {
+     "treasury": 1,
+     "state": 2
+    }
+   },
+   {
+    "label": "Absorb the costs",
+    "effects": [
+     [
+      "us",
+      "approval",
+      -2
+     ]
+    ],
+    "advisors": {}
+   }
+  ]
+ },
+ {
+  "id": "haiti_mission",
+  "speaker": "un",
+  "when": {
+   "after": "2027-01",
+   "chance": 0.05,
+   "if": [
+    [
+     "stat",
+     "HTI",
+     "stability",
+     "<",
+     25
+    ]
+   ]
+  },
+  "title": "Gangs overrun Port-au-Prince",
+  "text": "Gangs now control nearly all of Haiti's capital. A multinational police mission is short of money.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Fund the mission ($1bn)",
+    "effects": [
+     [
+      "funds",
+      "aid",
+      -1
+     ],
+     [
+      "add",
+      "HTI",
+      "stability",
+      8
+     ],
+     [
+      "us",
+      "standing",
+      3
+     ]
+    ],
+    "advisors": {
+     "un": 3,
+     "state": 2
+    }
+   },
+   {
+    "label": "Send US forces (10 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -10
+     ],
+     [
+      "deploy",
+      "HTI"
+     ],
+     [
+      "add",
+      "HTI",
+      "stability",
+      14
+     ],
+     [
+      "us",
+      "approval",
+      -1
+     ]
+    ],
+    "advisors": {
+     "defense": 1,
+     "un": 2,
+     "chief": -2
+    }
+   },
+   {
+    "label": "Stay out",
+    "effects": [
+     [
+      "add",
+      "HTI",
+      "stability",
+      -4
+     ]
+    ],
+    "advisors": {
+     "un": -2
+    }
+   }
+  ]
+ },
+ {
+  "id": "red_sea",
+  "speaker": "defense",
+  "when": {
+   "after": "2027-01",
+   "chance": 0.05,
+   "if": [
+    [
+     "stat",
+     "YEM",
+     "terror",
+     ">",
+     40
+    ]
+   ]
+  },
+  "title": "Missiles hit ships in the Red Sea",
+  "text": "Militants in Yemen are firing drones and missiles at cargo ships. Insurers are pulling out of the route.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Naval escorts and strikes (10 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -10
+     ],
+     [
+      "add",
+      "YEM",
+      "terror",
+      -10
+     ],
+     [
+      "add",
+      "YEM",
+      "relation",
+      -10
+     ],
+     [
+      "us",
+      "approval",
+      1
+     ]
+    ],
+    "advisors": {
+     "defense": 3,
+     "nsa": 2
+    }
+   },
+   {
+    "label": "Coalition escorts only",
+    "effects": [
+     [
+      "funds",
+      "defense",
+      -1
+     ],
+     [
+      "us",
+      "standing",
+      2
+     ]
+    ],
+    "advisors": {
+     "defense": 1,
+     "state": 2
+    }
+   },
+   {
+    "label": "Reroute around Africa",
+    "effects": [
+     [
+      "us",
+      "approval",
+      -2
+     ]
+    ],
+    "advisors": {
+     "treasury": -1
+    }
+   }
+  ]
+ },
+ {
+  "id": "serbia_kosovo",
+  "speaker": "state",
+  "when": {
+   "after": "2027-01",
+   "chance": 0.03,
+   "if": [
+    [
+     "active",
+     "KOS"
+    ],
+    [
+     "active",
+     "SRB"
+    ]
+   ]
+  },
+  "title": "Clashes in northern Kosovo",
+  "text": "Serbian paramilitaries have clashed with Kosovo police. Belgrade has put troops on high alert.",
+  "effects": [
+   [
+    "add",
+    "SRB",
+    "ambition",
+    10
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Reinforce the NATO mission",
+    "effects": [
+     [
+      "deploy",
+      "KOS"
+     ],
+     [
+      "add",
+      "SRB",
+      "relation",
+      -8
+     ]
+    ],
+    "advisors": {
+     "defense": 2,
+     "state": 1
+    }
+   },
+   {
+    "label": "Broker talks (5 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -5
+     ],
+     [
+      "add",
+      "SRB",
+      "ambition",
+      -8
+     ],
+     [
+      "us",
+      "standing",
+      2
+     ]
+    ],
+    "advisors": {
+     "state": 3,
+     "un": 2
+    }
+   }
+  ]
+ }
+]
