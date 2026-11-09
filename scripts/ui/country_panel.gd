@@ -117,6 +117,7 @@ class Silhouette extends Control:
 
 func refresh() -> void:
 	var scroll_before := scroll_vertical
+	var focus_row: Control = null
 	UITheme.clear(_box)
 	if not Game.has_game():
 		return
@@ -161,6 +162,8 @@ func refresh() -> void:
 		tags.append(["US trade deal", UITheme.GOOD])
 	if s.us["troops"].has(iso):
 		tags.append(["US troops present", UITheme.ACCENT])
+	if d.get("pact", false):
+		tags.append(["Defence pact", Color(0.45, 0.75, 1.0)])
 	if d.get("civil_war", false):
 		tags.append(["Civil war", UITheme.BAD])
 	if float(d.get("rival_pull", 0.0)) >= 10.0:
@@ -262,7 +265,11 @@ func refresh() -> void:
 			ch.add_child(UITheme.icon_rect(CAT_ICONS.get(def["cat"], "score"), 13, CAT_COLORS[def["cat"]]))
 			ch.add_child(UITheme.bold(def["cat"].to_upper(), 10, CAT_COLORS[def["cat"]]))
 			_box.add_child(ch)
-		_box.add_child(_action_row(s, iso, id))
+		var arow := _action_row(s, iso, id)
+		_box.add_child(arow)
+		if Game.highlight.get("iso", "") == iso and Game.highlight.get("action", "") == id:
+			_mark(arow)
+			focus_row = arow
 
 	# ---- Advice
 	_box.add_child(HSeparator.new())
@@ -286,13 +293,30 @@ func refresh() -> void:
 		pc.add_child(row)
 		_box.add_child(pc)
 	await get_tree().process_frame
-	scroll_vertical = scroll_before
+	if focus_row != null and is_instance_valid(focus_row):
+		ensure_control_visible(focus_row)
+		Game.highlight = {}
+	else:
+		scroll_vertical = scroll_before
+
+
+## Ring an option the Next Steps panel pointed at.
+func _mark(row: Control) -> void:
+	if row is PanelContainer:
+		var sb := UITheme.box(Color(UITheme.ACCENT, 0.12), UITheme.ACCENT, 7, 9)
+		sb.set_border_width_all(2)
+		row.add_theme_stylebox_override("panel", sb)
+	var tw := row.create_tween().set_loops(3)
+	tw.tween_property(row, "modulate", Color(1.25, 1.2, 1.0), 0.35)
+	tw.tween_property(row, "modulate", Color.WHITE, 0.35)
 
 
 ## Options that make no sense right now are hidden rather than greyed out.
 func _hidden(s: GameState, iso: String, id: String) -> bool:
 	var d := s.c(iso)
 	match id:
+		"assassinate":
+			return float(d["relation"]) > 0.0
 		"lift_sanction":
 			return not d.get("sanctioned", false)
 		"sanction":
@@ -307,6 +331,10 @@ func _hidden(s: GameState, iso: String, id: String) -> bool:
 			return not s.at_war(iso)
 		"trade":
 			return d.get("trade_deal", false)
+		"pact":
+			return d.get("pact", false) or float(d["relation"]) < 0.0
+		"end_pact":
+			return not d.get("pact", false)
 	if Actions.DEFS[id].has("op") and not Actions.op_for(s, iso, Actions.DEFS[id]["op"]).is_empty():
 		return true
 	return false
@@ -356,8 +384,8 @@ func _action_row(s: GameState, iso: String, id: String) -> Control:
 	chips.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	chips.add_theme_constant_override("separation", 3)
 	chips.custom_minimum_size.x = 68
-	if int(def["pc"]) > 0:
-		chips.add_child(_chip("%d PC" % int(def["pc"]), UITheme.ACCENT))
+	if Actions.pc_of(Game.state, id) > 0:
+		chips.add_child(_chip("%d PC" % Actions.pc_of(Game.state, id), UITheme.ACCENT))
 	if def["pool"] != "":
 		chips.add_child(_chip("$%.1fbn" % Actions.cost_of(s, id), UITheme.GOOD))
 	if float(check["chance"]) >= 0.0:

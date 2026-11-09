@@ -8,11 +8,13 @@ const AGENDA_TEXT := {
 	"humanitarian": "Humanitarian: cut world hunger (population-weighted).",
 	"democratiser": "Democratiser: raise world freedom (population-weighted).",
 	"hegemon": "Hegemon: grow the share of world GDP friendly to the US.",
+	"strongman": "Strongman: tighten your grip. Sustained tyranny, terms won, and a third term if you dare.",
 }
-const AGENDA_ICONS := {"peacemaker": "diplomacy", "humanitarian": "economic", "democratiser": "standing", "hegemon": "military"}
+const AGENDA_ICONS := {"peacemaker": "diplomacy", "humanitarian": "economic", "democratiser": "standing", "hegemon": "military", "strongman": "scandal"}
 const ENDING_TITLES := {
 	"retired": "Your presidency is over", "defeated": "Defeated at the polls", "impeached": "Impeached and removed",
 	"cabinet": "Forced out by your own party", "assassinated": "Assassinated", "nuclear": "Nuclear war",
+	"deposed": "Deposed in a military coup", "resigned": "Resigned in disgrace", "dictator": "President for life",
 }
 const TOP_STATS := [
 	["date", "date", "Date"], ["approval", "approval", "Approval"], ["pc", "pc", "Political capital"],
@@ -35,6 +37,7 @@ var hud: Control
 var tabs: TabContainer
 var top_labels: Dictionary = {}
 var top_deltas: Dictionary = {}
+var top_cells: Dictionary = {}
 var end_button: Button
 var ticker: Label
 var mode_select: OptionButton
@@ -76,6 +79,11 @@ func _ready() -> void:
 	map_holder.add_child(map)
 	map.country_clicked.connect(Game.select)
 	map_holder.add_child(_build_map_controls())
+	var steps := NextSteps.new().setup(3, true)
+	steps.position = Vector2(14, 72)
+	steps.custom_minimum_size = Vector2(340, 0)
+	steps.size = Vector2(340, 0)
+	map_holder.add_child(steps)
 
 	tabs = TabContainer.new()
 	tabs.custom_minimum_size = Vector2(440, 0)
@@ -122,6 +130,7 @@ func _ready() -> void:
 	Game.selection_changed.connect(_on_select)
 	Game.message.connect(show_toast)
 	Game.game_ended.connect(_advance_flow)
+	Game.guidance_go.connect(_on_guidance)
 
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--screenshot="):
@@ -166,7 +175,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				Game.select("")
 			else:
 				_show_pause()
-	elif k.keycode == KEY_F11 or (cmd and k.keycode == KEY_F):
+	elif cmd and k.keycode == KEY_F and in_game and overlay.get_child_count() == 0:
+		_show_search()
+	elif k.keycode == KEY_F11:
 		Settings.set_value("fullscreen", not Settings.get_value("fullscreen"))
 
 
@@ -217,6 +228,7 @@ func _build_top_bar() -> Control:
 		cell.add_child(v)
 		hb.add_child(cell)
 		top_labels[key] = val
+		top_cells[key] = cell
 		top_deltas[key] = delta
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -256,6 +268,21 @@ func _build_map_controls() -> Control:
 	return pc
 
 
+func _on_guidance(it: Dictionary) -> void:
+	var iso := String(it.get("iso", ""))
+	if iso != "":
+		Game.highlight = {"iso": iso, "action": String(it.get("action", ""))}
+		Game.select(iso)
+		return
+	match String(it.get("tab", "")):
+		"oval":
+			tabs.current_tab = 1
+		"cabinet":
+			tabs.current_tab = 3
+		"budget":
+			tabs.current_tab = 4
+
+
 func _on_mode(i: int) -> void:
 	map.mode = WorldMap.MODES[i]
 	map.queue_redraw()
@@ -273,6 +300,12 @@ func _refresh() -> void:
 	var u: Dictionary = s.us
 	var prev: Dictionary = s.history[s.history.size() - 2] if s.history.size() >= 2 else {}
 	(top_labels["date"] as Label).text = s.date_string()
+	var tip := "Approval is heading toward %d%%:" % int(Simulation.approval_target(s))
+	for f in Simulation.approval_factors(s):
+		if f[0] == "Baseline" or absf(float(f[1])) >= 0.5:
+			tip += "\n  %s  %s" % [f[0], ("%d" % int(round(float(f[1])))) if f[0] == "Baseline" else ("%+d" % int(round(float(f[1]))))]
+	tip += "\nBelow 50% on election day and you lose."
+	(top_cells["approval"] as Control).tooltip_text = tip
 	_set_top("approval", "%d%%" % int(u["approval"]), float(u["approval"]) >= 50.0, float(u["approval"]) < 42.0, float(u["approval"]) - float(prev.get("approval", u["approval"])))
 	_set_top("pc", "%d" % int(u["political_capital"]), float(u["political_capital"]) >= 40.0, float(u["political_capital"]) < 15.0, 0.0)
 	_set_top("congress", "%d%%" % int(u["congress"]), float(u["congress"]) >= 50.0, float(u["congress"]) < 40.0, 0.0)
@@ -331,6 +364,7 @@ func _end_month() -> void:
 	Game.end_month()
 	var s := Game.state
 	_digest_items = _digest_for(s.turn, s.turn)
+	_celebrate(s.turn, s.turn)
 	_show_election = not s.last_election.is_empty() and int(s.last_election.get("turn", -1)) == s.turn
 	_advance_flow()
 
@@ -348,6 +382,16 @@ func _digest_for(last: int, first: int) -> Array:
 	return items.slice(0, 7)
 
 
+## Little rewards: a fanfare and a toast when a mandate is met.
+func _celebrate(last: int, first: int) -> void:
+	for m in Game.state.turn_headlines(last, first):
+		var tx := String(m["text"])
+		if tx.begins_with("MANDATE MET"):
+			Audio.sfx("sting_win", -8.0)
+			show_toast("Mandate met: " + tx.trim_prefix("MANDATE MET: ").split(".")[0])
+			return
+
+
 func _fast_forward() -> void:
 	if not Game.has_game() or Game.state.game_over or _busy:
 		return
@@ -360,6 +404,7 @@ func _fast_forward() -> void:
 		return
 	var s := Game.state
 	_digest_items = _digest_for(s.turn, first)
+	_celebrate(s.turn, first)
 	_show_election = not s.last_election.is_empty() and int(s.last_election.get("turn", -1)) >= first
 	show_toast("Skipped to %s." % s.date_string())
 	_advance_flow()
@@ -502,7 +547,19 @@ func _show_help() -> void:
 
 [b]You lose[/b] if approval sinks below 50% on election day, if scandal hits 100 while Congress turns on you, or worse.
 
-[b]Keys[/b]: Enter end month · 1-6 map modes · 1-4 pick a briefing option · Space finish briefing text · Esc deselect/menu · Cmd/Ctrl+S save · F11 fullscreen."""
+[b]Keys[/b]: Enter end month · 1-6 map modes · 1-4 pick a briefing option · Space finish briefing text · Shift+Enter skip ahead · Esc deselect/menu · Cmd/Ctrl+F find a country · Cmd/Ctrl+S save · F11 fullscreen.
+
+[b]Mandates[/b]: each term brings three goals (Oval Office tab). Meeting them pays out approval and political capital.
+
+[b]Defence pacts[/b] deter attacks on your friends, but if an ally is invaded you must decide whether your word means anything.
+
+[b]Next steps[/b]: the panel on the map (and at the top of the Oval Office) lists what your cabinet would do next. Click one to jump straight to it.
+
+[b]Leader archetypes[/b] tilt the rules: the Idealist, Reformer, Warlord, Paranoid and Strongman each have a perk and a flaw.
+
+[b]Executive power[/b] (Oval Office): emergencies, a muzzled press, packed courts, rigged or postponed elections, a third term. Each raises tyranny, which brings protests, impeachment, restless generals and assassins. Restoring civil liberties brings it down.
+
+[b]Assassinations[/b]: leaders abroad are killed by plotters, and your CIA can do it too. Presidents are targets as well, more so if hated."""
 	v.add_child(rt)
 	var b := UITheme.button("Got it", "", true)
 	b.pressed.connect(_close_modal)
@@ -561,6 +618,7 @@ func _show_menu() -> void:
 	if Game.has_save():
 		buttons.append(["Continue", func(): _load(), true])
 	buttons.append(["New presidency", _show_new_game, not Game.has_save()])
+	buttons.append(["Presidential Library", _show_library, false])
 	buttons.append(["Settings", _show_settings_menu, false])
 	buttons.append(["Credits", _show_credits, false])
 	buttons.append(["Quit", func(): get_tree().quit(), false])
@@ -612,6 +670,100 @@ func _show_settings_menu() -> void:
 	v.add_child(sp)
 
 
+func _show_library() -> void:
+	var v := _menu_panel(860)
+	var lib := Game.load_library()
+	v.add_child(UITheme.heading("Presidential Library", 32))
+	var runs: Array = lib["runs"]
+	v.add_child(UITheme.label("%d presidencies on record · %d of %d achievements unlocked" % [runs.size(), lib["achievements"].size(), GameState.ACHIEVEMENTS.size()], 13, UITheme.MUTED))
+	var cols := HBoxContainer.new()
+	cols.add_theme_constant_override("separation", 20)
+	var left := VBoxContainer.new()
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left.add_child(UITheme.caps("Past presidencies"))
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(420, 360)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(list)
+	left.add_child(scroll)
+	if runs.is_empty():
+		list.add_child(UITheme.wrap(UITheme.label("No presidencies yet. History is waiting.", 13, UITheme.MUTED)))
+	for i in range(runs.size() - 1, -1, -1):
+		var r: Dictionary = runs[i]
+		var p := PanelContainer.new()
+		p.add_theme_stylebox_override("panel", UITheme.box(UITheme.PANEL_2, UITheme.LINE, 8, 8))
+		var h := HBoxContainer.new()
+		h.add_theme_constant_override("separation", 12)
+		var g := UITheme.heading(String(r.get("grade", "?")), 30, UITheme.ACCENT)
+		g.custom_minimum_size.x = 46
+		g.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		h.add_child(g)
+		var rv := VBoxContainer.new()
+		rv.add_theme_constant_override("separation", 0)
+		rv.add_child(UITheme.bold("%s · %s" % [r.get("scenario", ""), String(r.get("agenda", "")).capitalize()], 13))
+		rv.add_child(UITheme.label("%s · %d months, until %s · score %d · %s" % [ENDING_TITLES.get(r.get("ending", ""), "Ended"), int(r.get("months", 0)), r.get("until", ""), int(r.get("score", 0)), String(r.get("difficulty", "")).capitalize()], 11, UITheme.MUTED))
+		h.add_child(rv)
+		p.add_child(h)
+		list.add_child(p)
+	cols.add_child(left)
+	var right := VBoxContainer.new()
+	right.custom_minimum_size.x = 360
+	right.add_child(UITheme.caps("Achievements"))
+	for a in GameState.ACHIEVEMENTS:
+		var got: bool = lib["achievements"].has(a[0])
+		var row := HBoxContainer.new()
+		row.add_child(UITheme.icon_rect("score", 14, UITheme.ACCENT if got else Color(1, 1, 1, 0.15)))
+		var av := VBoxContainer.new()
+		av.add_theme_constant_override("separation", -2)
+		av.add_child(UITheme.bold(a[1], 12, UITheme.TEXT if got else UITheme.MUTED))
+		av.add_child(UITheme.label(a[2], 10, UITheme.MUTED))
+		row.add_child(av)
+		right.add_child(row)
+	cols.add_child(right)
+	v.add_child(cols)
+	var b := UITheme.button("Close", "", true)
+	b.pressed.connect(v.get_meta("close"))
+	v.add_child(b)
+
+
+func _show_search() -> void:
+	var v := _panel_modal(420)
+	overlay.set_meta("pause", true)
+	v.add_child(UITheme.heading("Find a country", 22))
+	var le := LineEdit.new()
+	le.placeholder_text = "Type a name, then Enter"
+	v.add_child(le)
+	var list := ItemList.new()
+	list.custom_minimum_size = Vector2(0, 260)
+	v.add_child(list)
+	var names: Array = []
+	for iso in Game.state.countries:
+		var d: Dictionary = Game.state.countries[iso]
+		if Game.state.is_active(iso) or d.get("player", false):
+			names.append([String(d["name"]), iso])
+	names.sort_custom(func(a, b): return a[0] < b[0])
+	var fill := func(q: String):
+		list.clear()
+		for n in names:
+			if q == "" or String(n[0]).to_lower().contains(q.to_lower()):
+				var idx := list.add_item(n[0])
+				list.set_item_metadata(idx, n[1])
+	fill.call("")
+	var pick := func(idx: int):
+		if idx < 0 or idx >= list.item_count:
+			return
+		var iso: String = list.get_item_metadata(idx)
+		_close_modal()
+		Game.select(iso)
+		map.focus(iso)
+	le.text_changed.connect(func(q): fill.call(q))
+	le.text_submitted.connect(func(_q): pick.call(0))
+	list.item_activated.connect(func(i): pick.call(i))
+	le.call_deferred("grab_focus")
+
+
 func _show_credits() -> void:
 	var v := _menu_panel(600)
 	v.add_child(UITheme.heading("Credits", 30))
@@ -622,7 +774,7 @@ func _show_credits() -> void:
 	rt.text = """[b]Shadow Desk[/b] v%s
 A spiritual successor to the presidential world-power simulations of the early 1990s.
 
-[b]Design, code, art and music[/b]: made with Claude for Derek Murphy. Portraits, icons, music and sound effects are generated procedurally from code; no third-party art or audio.
+[b]Design, code, art and music[/b]: made with Claude for Derek Murphy. Icons, music and sound effects are generated procedurally from code. Advisor portraits of fictional people were generated with Realistic Vision (OpenRAIL-M); advisor voices were recorded with Kokoro-82M (Apache 2.0).
 
 [b]Data[/b]: World Bank Open Data (CC BY 4.0). Military expenditure series from SIPRI via the World Bank. Country shapes from Natural Earth (public domain).
 
@@ -641,7 +793,7 @@ func _show_new_game() -> void:
 	var v := _menu_panel(900)
 	v.add_child(UITheme.heading("New presidency", 34))
 	var metas := ScenarioLoader.list_scenarios()
-	var picked := {"scenario": 0, "agenda": "peacemaker", "difficulty": "normal"}
+	var picked := {"scenario": 0, "agenda": "peacemaker", "difficulty": "normal", "persona": "statesman"}
 	v.add_child(UITheme.caps("Choose your moment"))
 	var cards := HBoxContainer.new()
 	cards.add_theme_constant_override("separation", 14)
@@ -683,6 +835,44 @@ func _show_new_game() -> void:
 		card_buttons.append(b)
 		cards.add_child(b)
 	v.add_child(cards)
+
+	# ---- Leader archetype
+	v.add_child(UITheme.caps("What kind of leader are you?"))
+	var prow := HBoxContainer.new()
+	prow.add_theme_constant_override("separation", 8)
+	var pdesc := UITheme.wrap(UITheme.label("", 12, UITheme.MUTED))
+	var pbuttons: Array = []
+	var show_persona := func(key: String):
+		var pd: Dictionary = Personas.DEFS[key]
+		pdesc.text = "%s.  Perk: %s  Flaw: %s" % [pd["name"], pd["perk"], pd["flaw"]]
+	for key in Personas.ORDER:
+		var pd: Dictionary = Personas.DEFS[key]
+		var pb := Button.new()
+		pb.toggle_mode = true
+		pb.text = String(pd["name"]).trim_prefix("The ")
+		pb.icon = UITheme.icon(String(pd["icon"]))
+		pb.add_theme_constant_override("icon_max_width", 16)
+		pb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		pb.custom_minimum_size = Vector2(0, 40)
+		pb.focus_mode = Control.FOCUS_NONE
+		pb.tooltip_text = "Perk: %s\nFlaw: %s" % [pd["perk"], pd["flaw"]]
+		var accent := UITheme.BAD if key == "strongman" else UITheme.ACCENT
+		pb.add_theme_stylebox_override("normal", UITheme.box(UITheme.PANEL_2, UITheme.LINE, 8, 8))
+		pb.add_theme_stylebox_override("hover", UITheme.box(UITheme.PANEL_2.lightened(0.06), accent.darkened(0.3), 8, 8))
+		pb.add_theme_stylebox_override("pressed", UITheme.box(UITheme.PANEL_2.lerp(accent, 0.16), accent, 8, 8))
+		pb.add_theme_stylebox_override("hover_pressed", UITheme.box(UITheme.PANEL_2.lerp(accent, 0.2), accent, 8, 8))
+		pb.button_pressed = key == "statesman"
+		pb.pressed.connect(func():
+			Audio.sfx("click")
+			picked["persona"] = key
+			for other in pbuttons:
+				other.button_pressed = other == pb
+			show_persona.call(key))
+		pbuttons.append(pb)
+		prow.add_child(pb)
+	v.add_child(prow)
+	show_persona.call("statesman")
+	v.add_child(pdesc)
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 24)
@@ -737,13 +927,13 @@ func _show_new_game() -> void:
 	go.add_theme_font_size_override("font_size", 20)
 	go.pressed.connect(func():
 		var id: String = metas[picked["scenario"]]["id"]
-		_start_game(id, picked["agenda"], el.button_pressed, picked["difficulty"]))
+		_start_game(id, picked["agenda"], el.button_pressed, picked["difficulty"], picked["persona"]))
 	br.add_child(go)
 	v.add_child(br)
 
 
-func _start_game(id: String, agenda: String, elections: bool, difficulty: String) -> void:
-	Game.new_game(id, agenda, elections, -1, difficulty)
+func _start_game(id: String, agenda: String, elections: bool, difficulty: String, persona: String = "statesman") -> void:
+	Game.new_game(id, agenda, elections, -1, difficulty, persona)
 	# Oath transition.
 	var fade := ColorRect.new()
 	fade.color = Color(0, 0, 0, 1)
@@ -796,6 +986,8 @@ func _run_tutorial() -> void:
 		{"target": map, "title": "The world", "text": "Every country is simulated: economy, stability, hunger, freedom, military, and its feelings about you. Click a country to open its dossier. Scroll or pinch to zoom, drag to pan. Keys 1-6 change the map view."},
 		{"target": tabs, "title": "The dossier", "text": "The Country tab shows what we know (fuzzy if intelligence is weak), what you can do, and what each advisor recommends. Hover an action for its cost and odds."},
 		{"target": top_labels["approval"].get_parent().get_parent().get_parent(), "title": "Your standing", "text": "Approval decides elections. Political capital pays for actions. Congress votes on trade deals and the use of force. Scandal at 100 means impeachment hearings."},
+		{"target": null, "title": "Next steps", "text": "Not sure what to do? The Next Steps panel on the map lists what your cabinet would do next: budget fixes, mandate moves, friends in trouble. Click one and it takes you straight there, with the right option ringed."},
+		{"target": tabs, "title": "Your mandate", "text": "Every term brings three concrete goals, listed in the Oval Office tab. Meeting them pays out approval and political capital, and history remembers. Some options are ONGOING: air campaigns, aid programmes, invasions. They run every month until you stop them."},
 		{"target": end_button, "title": "End the month", "text": "When you are done, end the month (Enter). The world moves, crises arrive as briefing cards, and a newspaper tells you what happened."},
 		{"target": null, "title": "One last thing", "text": "Rival powers court countries with loans and arms. Wars break out. Advisors resign if ignored. Pick your battles. Good luck."},
 	]
@@ -844,12 +1036,27 @@ func _show_game_over() -> void:
 	var g := GridContainer.new()
 	g.columns = 4
 	g.add_theme_constant_override("h_separation", 26)
-	for pair in [["Agenda", s.agenda.capitalize()], ["Score", str(int(s.agenda_score()))], ["Treaties", str(int(s.us["treaties"]))],
+	for pair in [["Leader", Personas.name_of(s)], ["Peak tyranny", str(int(s.stats.get("max_tyranny", 0)))], ["Agenda", s.agenda.capitalize()], ["Score", str(int(s.agenda_score()))], ["Treaties", str(int(s.us["treaties"]))],
 			["Elections won", str(s.elections_won)], ["Final approval", "%d%%" % int(s.us["approval"])], ["World standing", str(int(s.us.get("standing", 50)))],
 			["Difficulty", String(GameState.DIFFICULTY[s.difficulty]["label"])], ["Scenario", String(s.scenario.get("name", ""))]]:
 		g.add_child(UITheme.label(pair[0], 12, UITheme.MUTED))
 		g.add_child(UITheme.bold(pair[1], 13))
 	v.add_child(g)
+	var fresh := Game.record_presidency()
+	var earned := s.earned_achievements()
+	if not earned.is_empty():
+		v.add_child(UITheme.caps("Achievements this presidency"))
+		var flow := HFlowContainer.new()
+		flow.add_theme_constant_override("h_separation", 6)
+		flow.add_theme_constant_override("v_separation", 6)
+		for a in earned:
+			var is_new := fresh.any(func(x): return x[0] == a[0])
+			var l := UITheme.bold(("NEW · " if is_new else "") + String(a[1]), 11, UITheme.ACCENT if is_new else UITheme.TEXT)
+			l.tooltip_text = a[2]
+			l.mouse_filter = Control.MOUSE_FILTER_PASS
+			l.add_theme_stylebox_override("normal", UITheme.box(Color(UITheme.ACCENT, 0.14 if is_new else 0.05), Color(UITheme.ACCENT, 0.6 if is_new else 0.25), 10, 5))
+			flow.add_child(l)
+		v.add_child(flow)
 	var br := HBoxContainer.new()
 	var menu_b := UITheme.button("Main menu")
 	menu_b.custom_minimum_size = Vector2(160, 44)
@@ -885,6 +1092,9 @@ func _dev_screenshot(spec: String) -> void:
 	Settings.values["tutorial_done"] = true
 	Settings.values["voice_enabled"] = false
 	Game.new_game(scenario, "peacemaker", true, 1990)
+	if view == "pact":
+		Game.state.c("KWT")["pact"] = true
+		Game.state.c("IRQ")["ambition"] = 95.0
 	for i in months:
 		while not Game.state.pending.is_empty():
 			Game.choose(0)
@@ -919,8 +1129,35 @@ func _dev_screenshot(spec: String) -> void:
 			_advance_flow()
 		"tutorial":
 			_run_tutorial()
+		"pact":
+			_advance_flow()
+		"search":
+			_show_search()
+		"library":
+			Simulation.trigger_ending(Game.state, "retired", "Test.")
+			Game.record_presidency()
+			_show_menu()
+			_show_library()
 		"settings":
 			_show_settings_in_game()
+		"tyrant":
+			var s := Game.state
+			s.us["persona"] = "strongman"
+			s.agenda = "strongman"
+			s.us["political_capital"] = 90.0
+			s.us["tyranny"] = 48.0
+			s.us["press_muzzled"] = true
+			s.us["protests"] = 3
+			s.us["emergency_until"] = s.turn + 7
+			Game.state_changed.emit()
+			tabs.current_tab = 1
+			for i in 3:
+				await get_tree().process_frame
+			(tabs.get_child(1) as ScrollContainer).scroll_vertical = 640
+		"attempt":
+			Game.state.pending.clear()
+			Power._card(Game.state, "attempt", [{"label": "Address the nation calmly", "effects": []}, {"label": "Declare a national emergency", "effects": []}, {"label": "Double your security and say nothing", "effects": []}], "", "terror")
+			_advance_flow()
 		"ops", "fx":
 			var s := Game.state
 			s.us["political_capital"] = 100.0

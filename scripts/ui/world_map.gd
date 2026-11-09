@@ -443,6 +443,12 @@ func _draw_overlays(s: GameState) -> void:
 			var rc: Color = BLOC_COLORS.get(d.get("rival_bloc", ""), Color.RED)
 			draw_circle(p2, 3.5, rc)
 			draw_arc(p2, 5.5 + 2.0 * pulse, 0, TAU, 14, Color(rc, 0.6), 1.0, true)
+	var shield := UITheme.icon("military")
+	for iso in s.active_isos():
+		if s.countries[iso].get("pact", false) and shield:
+			var sp := centroid_of(iso) + Vector2(-12, -12)
+			draw_circle(sp, 7.5, Color(0.03, 0.05, 0.09, 0.9))
+			draw_texture_rect(shield, Rect2(sp - Vector2(6, 6), Vector2(12, 12)), false, Color(0.45, 0.75, 1.0))
 	for iso in s.us["troops"]:
 		var p := centroid_of(iso) + Vector2(10, -10)
 		var r := Rect2(p - Vector2(5, 5), Vector2(10, 10))

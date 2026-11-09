@@ -221,6 +221,7 @@ static func icon_rect(name: String, size: int = 16, color: Color = TEXT) -> Text
 static func portrait_rect(person: String, size: int = 64) -> TextureRect:
 	var r := TextureRect.new()
 	r.texture = portrait(person)
+	r.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	r.custom_minimum_size = Vector2(size, size)
 	r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	r.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED

@@ -10,6 +10,8 @@ var _reveal_tween: Tween
 var _last_chars := 0
 var _paper: PanelContainer
 var _locked := false
+var _seat := "nsa"
+var _person := ""
 
 
 func setup(c: Dictionary) -> BriefingCard:
@@ -23,9 +25,13 @@ func _ready() -> void:
 	var speaker_id: String = card.get("speaker", "nsa")
 	var adv := s.advisor(speaker_id)
 	var person: String = adv.get("name", "")
-	if int(adv.get("vacant_months", 0)) > 0:
+	var seat := speaker_id
+	if int(adv.get("vacant_months", 0)) > 0 or adv.is_empty():
 		adv = s.advisor("chief")
 		person = adv.get("name", "")
+		seat = "chief"
+	_seat = seat
+	_person = person
 
 	_paper = PanelContainer.new()
 	_paper.custom_minimum_size = Vector2(700, 0)
@@ -63,7 +69,7 @@ func _ready() -> void:
 		frame.add_theme_stylebox_override("panel", UITheme.shadow_box(Color(0.99, 0.98, 0.95), Color(0.8, 0.76, 0.68), 2, 6))
 		var art := TextureRect.new()
 		art.texture = art_tex
-		art.custom_minimum_size = Vector2(632, 168)
+		art.custom_minimum_size = Vector2(632, 118)
 		art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 		frame.add_child(art)
@@ -73,23 +79,25 @@ func _ready() -> void:
 
 	var who := HBoxContainer.new()
 	who.add_theme_constant_override("separation", 14)
-	var pr := UITheme.portrait_rect(person, 76)
-	who.add_child(pr)
+	var feed := VideoFeed.new().setup(person, String(adv.get("title", "")))
+	feed.custom_minimum_size = Vector2(150, 168)
+	who.add_child(feed)
 	var tv := VBoxContainer.new()
 	tv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var title := _type(String(card["title"]), 22, true)
+	tv.add_theme_constant_override("separation", 6)
+	var title := _type(String(card["title"]), 21, true)
 	UITheme.wrap(title)
 	tv.add_child(title)
-	tv.add_child(_type("Briefed by %s, %s" % [person, adv.get("title", "")], 13, false, Color(0.38, 0.35, 0.31)))
+	tv.add_child(_type("On the secure line: %s, %s" % [person, adv.get("title", "")], 13, false, Color(0.38, 0.35, 0.31)))
 	who.add_child(tv)
 	v.add_child(who)
 
 	_body = _type(String(card["text"]), 16, false)
 	UITheme.wrap(_body)
-	_body.custom_minimum_size = Vector2(640, 0)
+	_body.custom_minimum_size = Vector2(470, 0)
 	_body.mouse_filter = Control.MOUSE_FILTER_STOP
 	_body.gui_input.connect(func(e): if e is InputEventMouseButton and e.pressed: _finish_reveal())
-	v.add_child(_body)
+	tv.add_child(_body)
 	v.add_child(_rule())
 	v.add_child(_type("YOUR DECISION", 12, true, Color(0.38, 0.35, 0.31)))
 
@@ -136,7 +144,7 @@ func _ready() -> void:
 			Settings.set_value("voice_enabled", on)
 			vb.icon = UITheme.icon("speaker_on" if on else "speaker_off")
 			if on:
-				Audio.speak(person, "%s. %s" % [card["title"], card["text"]])
+				Audio.speak_card(card, _seat, _person)
 			else:
 				Audio.stop_voice())
 		foot.add_child(vb)
@@ -152,7 +160,7 @@ func _ready() -> void:
 	Audio.sfx("paper")
 	if speaker_id in ["nsa", "defense"] or String(card["title"]).to_lower().contains("war"):
 		Audio.music("tension")
-	Audio.speak(person, "%s. %s" % [card["title"], card["text"]])
+	Audio.speak_card(card, seat, person)
 	if Settings.get_value("typewriter"):
 		_body.visible_ratio = 0.0
 		var dur := clampf(String(card["text"]).length() * 0.006, 0.4, 1.3)
