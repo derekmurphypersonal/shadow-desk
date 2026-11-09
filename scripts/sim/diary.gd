@@ -13,7 +13,7 @@ const WEEKDAYS := ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"]
 const TOWNS := ["Ohio", "Michigan", "Arizona", "Georgia", "Pennsylvania", "Wisconsin", "Iowa", "Nevada", "North Carolina", "New Hampshire"]
 const ICONS := {"call": "diplomacy", "dinner": "diplomacy", "intel": "covert", "hill": "congress", "townhall": "approval",
 	"troops": "military", "advisor": "congress", "press": "scandal", "review": "score", "purse": "economic",
-	"un": "standing", "rest": "pc"}
+	"un": "standing", "rest": "pc", "crisis": "war", "hotline": "diplomacy"}
 
 
 static func state(s: GameState) -> Dictionary:
@@ -69,10 +69,10 @@ static func roll(s: GameState, map_data: Dictionary) -> void:
 		if picked.size() >= OFFERED:
 			break
 		var kind := String(c["kind"])
-		var cap := 2 if kind == "call" else 1
+		var cap := 2 if kind in ["call", "hotline", "crisis"] else 1
 		if int(kinds.get(kind, 0)) >= cap:
 			continue
-		if c["iso"] != "" and isos.has(c["iso"]):
+		if c["iso"] != "" and isos.has(c["iso"]) and kind != "crisis":
 			continue
 		kinds[kind] = int(kinds.get(kind, 0)) + 1
 		if c["iso"] != "":
@@ -119,7 +119,16 @@ static func _candidates(s: GameState, map_data: Dictionary) -> Array:
 			called[pick] = 3.5
 	for iso in called:
 		var nm := String(s.c(iso)["name"])
-		out.append(_c("call", iso, float(called[iso]), 1, "Call the leader of %s" % nm, "Twenty minutes on the phone. Relations improve a little; rivals lose ground."))
+		if _hot(s, iso):
+			out.append(_c("hotline", iso, float(called[iso]) + 0.5, 1, "Hotline: the leader of %s" % nm, "A real negotiation in two exchanges. Read their temperament; what you say decides how it goes."))
+		else:
+			out.append(_c("call", iso, float(called[iso]), 1, "Call the leader of %s" % nm, "Twenty minutes on the phone. Relations improve a little; rivals lose ground."))
+	# ---- Live crises: an hour in the Situation Room strengthens your hand.
+	for c in Crises.list(s):
+		if not c.get("worked", false):
+			var ci := _c("crisis", String(c["iso"]), 10.0, 1, "Situation Room: %s" % String(c["title"]), "Work the crisis in person. Strengthens your hand (now %s)." % Crises.hand_word(c))
+			ci["crisis"] = str(c["id"])
+			out.append(ci)
 	# ---- A state dinner for a friend worth keeping.
 	var guest := ""
 	var guest_score := -1.0
@@ -177,6 +186,12 @@ static func _candidates(s: GameState, map_data: Dictionary) -> Array:
 	return out
 
 
+## Countries that matter enough for a hotline negotiation instead of a courtesy call (see Hotline).
+static func _hot(s: GameState, iso: String) -> bool:
+	var d := s.c(iso)
+	return float(d["gdp"]) > 150.0 * s.cost_scale() or bool(d.get("nuclear", false)) or s.at_war(iso) or float(d["ambition"]) > 70.0
+
+
 static func _poorest_pool(s: GameState) -> Array:
 	var best := "aid"
 	var low := 1e9
@@ -220,6 +235,11 @@ static func attend(s: GameState, index: int, map_data: Dictionary) -> String:
 			d["relation"] = clampf(float(d["relation"]) + gain, -100.0, 100.0)
 			d["rival_pull"] = maxf(0.0, float(d.get("rival_pull", 0.0)) - 4.0)
 			msg = "Call with %s: relations %+d." % [nm, int(round(gain))]
+		"hotline":
+			# The interface runs the conversation and leaves its result on the item; bots play it here.
+			msg = String(it["result"]) if String(it.get("result", "")) != "" else Hotline.auto(s, iso)
+		"crisis":
+			msg = Crises.work(s, String(it.get("crisis", "")), map_data)
 		"dinner":
 			d["relation"] = clampf(float(d["relation"]) + 8.0, -100.0, 100.0)
 			d["rival_pull"] = maxf(0.0, float(d.get("rival_pull", 0.0)) - 6.0)

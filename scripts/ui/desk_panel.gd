@@ -30,9 +30,59 @@ func refresh() -> void:
 	scroll_vertical = keep
 
 
-## Hook for sections added by later systems (crises).
-func _extra(_s: GameState) -> void:
-	pass
+## Live crises: the clock, your hand, and what would strengthen it.
+func _extra(s: GameState) -> void:
+	var live := Crises.list(s)
+	if live.is_empty():
+		return
+	_box.add_child(HSeparator.new())
+	_box.add_child(UITheme.caps("Crises", UITheme.BAD))
+	for c in live:
+		_box.add_child(crisis_card(s, c, true))
+
+
+static func crisis_card(s: GameState, c: Dictionary, detail: bool) -> Control:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", UITheme.box(Color(UITheme.BAD, 0.09), Color(UITheme.BAD, 0.6), 8, 8))
+	p.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	p.gui_input.connect(func(e):
+		if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
+			Audio.sfx("click")
+			Game.show_country(String(c["iso"])))
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 3)
+	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	p.add_child(v)
+	var t := UITheme.bold(String(c["title"]), 13)
+	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.add_child(t)
+	var steps := HBoxContainer.new()
+	steps.add_theme_constant_override("separation", 4)
+	steps.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for i in 3:
+		var pip := Panel.new()
+		pip.custom_minimum_size = Vector2(0, 5)
+		pip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		pip.add_theme_stylebox_override("panel", UITheme.box(UITheme.BAD if i < Crises.stage(c) else UITheme.LINE, Color(0, 0, 0, 0), 3, 0))
+		steps.add_child(pip)
+	v.add_child(steps)
+	var left := Crises.months_left(c)
+	var hw := Crises.hand_word(c)
+	var hc: Color = UITheme.BAD if hw == "weak" else (UITheme.WARN if hw == "even" else UITheme.GOOD)
+	var row := HBoxContainer.new()
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var l := UITheme.label("Stage %d of 3 · %d month%s left" % [Crises.stage(c), left, "" if left == 1 else "s"], 11, UITheme.MUTED)
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(l)
+	row.add_child(UITheme.bold("Your hand: %s (%d%%)" % [hw, int(c["hand"])], 11, hc))
+	v.add_child(row)
+	if detail:
+		var h := UITheme.wrap(UITheme.label(Crises.helps_text(s, c), 11, UITheme.MUTED))
+		h.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		v.add_child(h)
+	return p
 
 
 func _diary(s: GameState) -> void:

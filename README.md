@@ -4,7 +4,7 @@
 
 **The world is on your desk.** Shadow Desk is a geopolitical strategy game in the spirit of the early-90s presidential world-power simulations. You run US foreign policy one month at a time: read your daily brief, weigh seven advisors who each want something different, and decide where to send envoys, aid, sanctions, spies or the Marines. Then the world answers.
 
-Version 1.5.0 · Godot 4.7 · macOS, Windows, Linux
+Version 1.6.0 · Godot 4.7 · macOS, Windows, Linux
 
 ## Features
 
@@ -14,14 +14,17 @@ Version 1.5.0 · Godot 4.7 · macOS, Windows, Linux
 - **Sustained operations.** Run air campaigns, full invasions, war support for allies, aid programmes, charm offensives and covert campaigns that continue month after month until you stop them or the money runs out.
 - **A cabinet with opinions.** Seven advisors, each with a photographic portrait and their own voice, brief you, argue, and resign if you ignore them. Your intelligence is only as good as your CIA Director.
 - **Voiced briefings.** Crisis cards arrive as pages of the President's Daily Brief, with the advisor who wrote them on a secure video link reading it to you in a natural neural voice.
-- **93 events**, from the Gulf War and the Soviet coup to Arctic standoffs and deepfakes, plus a monthly newspaper and election-night returns.
+- **93 events and five kinds of crisis**, from the Gulf War and the Soviet coup to Arctic standoffs and deepfakes, plus a monthly newspaper and election-night returns.
 - **Term mandates.** Three concrete goals each term, drawn from the live world and flavoured by your agenda. Meet them for approval and political capital.
 - **Defence pacts and credibility.** Sign pacts with close friends. When one is attacked, honour it or watch every ally reconsider.
 - **UN Security Council votes** and multi-month story arcs that remember what you did.
-- **Presidential Library.** Every presidency is recorded, with 14 achievements to earn.
+- **Presidential Library.** Every presidency is recorded, with 19 achievements to earn.
 - **The President's diary.** Every month brings five or six dated engagements (calls to leaders, state dinners, CIA deep-dives, lunches on the Hill, town halls) and time for three. They cost time, not political capital, and each resolves on the spot.
 - **See what you did.** Every briefing option shows what it costs and is likely to change; every decision ends with what it actually changed. At End month the month plays out day by day on the map.
 - **The map is the to-do list.** Pins mark what needs you. Click a country for a ring of the four option types, with your cabinet's pick in gold.
+- **Crises with a clock.** Hostage-takings, border standoffs, a race for the bomb, famines and coup plots run for three or four months. Work them with diary time and the right moves; your hand is your chance that they end well.
+- **Hotline calls.** Short negotiations with the leaders who matter, known only by office and temperament. How you open and what you offer moves their mood.
+- **Advisors who argue.** When the cabinet is split, two advisors make their case on the briefing, in their own voices.
 - **Never lost.** The Desk tab lists your diary, what needs attention and everything you have running.
 - **Leader archetypes and the strongman path.** Play an Idealist, a Warlord, a Paranoid or a Strongman. Muzzle the press, pack the courts, rig the election, seize a third term, and live with the protests, impeachment drives, restless generals and assassins that follow.
 - **Five agendas, three difficulty levels, nine ways to end.** Win re-election, get impeached, lose your cabinet, or worse. History grades you at the end.

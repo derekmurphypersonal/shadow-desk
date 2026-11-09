@@ -1,0 +1,30 @@
+{
+ "chief": {
+  "for": ["The voters will understand this one.", "Keep it simple and keep it cheap. This does both.", "This plays well at home. Take it."],
+  "against": ["That will hurt you at home.", "Congress will make you pay for that one."]
+ },
+ "state": {
+  "for": ["Give diplomacy a chance before we close any doors.", "This keeps our friends with us. Take it.", "Talk first. The other options will still be there tomorrow."],
+  "against": ["That will cost us friends we are going to need.", "We would be alone on that."]
+ },
+ "defense": {
+  "for": ["Strength now saves lives later. Do it.", "We have the forces in place. Give the order.", "Hesitate, and they will read it as weakness."],
+  "against": ["That leaves our people exposed.", "It looks weak, and our rivals will notice."]
+ },
+ "treasury": {
+  "for": ["This is the option we can afford.", "The markets will thank you for it.", "Watch the cost. This one pays for itself."],
+  "against": ["We cannot afford it.", "That is money we do not have."]
+ },
+ "nsa": {
+  "for": ["This is the move that protects us.", "The risk is manageable. I would take it.", "Every day we wait, the threat grows. Act."],
+  "against": ["That invites the next attack.", "It leaves the threat exactly where it is."]
+ },
+ "cia": {
+  "for": ["My people can make this work, quietly.", "We know more than they think we do. Use it.", "Trust the intelligence on this one."],
+  "against": ["If that leaks, and it will, we own it.", "We would be acting blind."]
+ },
+ "un": {
+  "for": ["The world will stand with us on this.", "Do this and we keep the moral high ground.", "The Council is watching. Lead."],
+  "against": ["The world will not forgive that.", "That isolates us."]
+ }
+}

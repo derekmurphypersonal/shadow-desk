@@ -411,6 +411,11 @@ static func apply(s: GameState, effects: Array, ctx: String, map_data: Dictionar
 						s.countries[iso]["bloc"] = e[2]
 			"trust":
 				Advisors.adjust(s, e[1], float(e[2]))
+			"crisis":
+				# Strengthen (or weaken) your hand in the crisis this briefing is about.
+				var cr := Crises.for_iso(s, ctx)
+				if not cr.is_empty():
+					Crises.add_hand(cr, float(e[1]))
 			"power":
 				Power.apply_move(s, String(e[1]))
 			"end":

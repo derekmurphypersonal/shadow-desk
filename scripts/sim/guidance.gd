@@ -14,6 +14,13 @@ static func suggest(s: GameState, map_data: Dictionary, limit: int = 5) -> Array
 	var pc := float(u["political_capital"])
 	var to_election := s.next_election_turn - s.turn
 
+	# ---- Live crises come first ----
+	for c in Crises.list(s):
+		var help := Crises.best_help(s, c)
+		var left := Crises.months_left(c)
+		out.append(_i(88, "war", "Crisis: %s" % c["title"], "%d month%s left; your hand is %s. %s" % [left, "" if left == 1 else "s", Crises.hand_word(c), Crises.helps_text(s, c)],
+			String(help[0]) if not help.is_empty() else String(c["iso"]), "", String(help[1]) if not help.is_empty() else ""))
+
 	# ---- Home front and budget ----
 	var deficit := Simulation.budget_deficit_pct(s)
 	if deficit > 5.5:

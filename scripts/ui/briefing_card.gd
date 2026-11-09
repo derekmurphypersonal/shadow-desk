@@ -12,6 +12,7 @@ var _paper: PanelContainer
 var _locked := false
 var _seat := "nsa"
 var _person := ""
+var _debate: Array = []
 var _choices: VBoxContainer
 var _result: VBoxContainer
 var _picked := -1
@@ -113,6 +114,7 @@ func _ready() -> void:
 	_result.visible = false
 	v.add_child(_result)
 	var choices: Array = card.get("choices", [])
+	_debate = Advisors.debate(s, card)
 	for i in choices.size():
 		var ch: Dictionary = choices[i]
 		var b := Button.new()
@@ -146,6 +148,21 @@ func _ready() -> void:
 			chips.add_child(hl)
 		row.add_child(chips)
 		_choices.add_child(row)
+		# Advisors arguing for or against this option, in their own words.
+		for d in _debate:
+			if int(d["choice"]) != i:
+				continue
+			var q := HBoxContainer.new()
+			q.add_theme_constant_override("separation", 8)
+			var qpad := Control.new()
+			qpad.custom_minimum_size.x = 14
+			q.add_child(qpad)
+			q.add_child(UITheme.portrait_rect(String(d["name"]), 26))
+			var ink: Color = UITheme.tone("good" if d["side"] == "for" else "bad", true)
+			var ql := _type("%s: “%s”" % [Report.short_title(s, String(d["id"])), d["line"]], 13, false, ink)
+			ql.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			q.add_child(ql)
+			_choices.add_child(q)
 
 	var foot := HBoxContainer.new()
 	if s.pending.size() > 1:
@@ -183,6 +200,7 @@ func _ready() -> void:
 	if speaker_id in ["nsa", "defense"] or String(card["title"]).to_lower().contains("war"):
 		Audio.music("tension")
 	Audio.speak_card(card, seat, person)
+	Audio.speak_lines(_debate.map(func(d): return [d["id"], d["line"]]))
 	if Settings.get_value("typewriter"):
 		_body.visible_ratio = 0.0
 		var dur := clampf(String(card["text"]).length() * 0.006, 0.4, 1.3)

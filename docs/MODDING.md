@@ -59,3 +59,11 @@ Everything about the world lives in JSON under `data/scenarios/`. Copy a scenari
 | News | `["log", "Text for the news wire."]` |
 
 Run `godot --headless --path . -s tests/run_tests.gd` after editing: it plays every scenario for ten years and fails on broken references or out-of-range stats.
+
+## Cards written in code, and other voiced text
+
+- `data/scenarios/system_cards.json` holds the title and text of briefings the game builds itself: UN votes, pact tests, the opening briefing (`opening_<scenario id>`), and the two briefings for each kind of crisis (`crisis_<kind>_start`, `crisis_<kind>_final`). `$NAME` and `$B` are replaced with country names.
+- `data/scenarios/debate_lines.json` holds the short lines advisors use when they argue a briefing: three `for` and two `against` per seat.
+- An event choice can strengthen or weaken the player's hand in a live crisis in the event's country with the effect `["crisis", 15]`.
+
+Any change to briefing text, system cards or debate lines needs the voices re-recorded with `tools/build_voices.py`; `tests/voice_check.gd` fails until every line has a recording.

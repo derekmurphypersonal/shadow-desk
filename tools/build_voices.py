@@ -102,6 +102,14 @@ def collect():
                     t = normalize(p)
                     if t:
                         lines[seat].add(t)
+    # Advisors arguing their case on a briefing: short lines, each in its own seat's voice.
+    debate = json.load(open(os.path.join(ROOT, "data", "scenarios", "debate_lines.json")))
+    for seat, sides in debate.items():
+        for side in sides.values():
+            for line in side:
+                t = normalize(line)
+                if t and seat in lines:
+                    lines[seat].add(t)
     names = set()
 
     def walk(x):

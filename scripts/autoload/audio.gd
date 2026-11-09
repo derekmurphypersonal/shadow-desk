@@ -184,6 +184,28 @@ func speak_card(card: Dictionary, seat: String, person: String) -> void:
 	_play_next()
 
 
+## Queue extra recorded lines after whatever is being read: advisors arguing their case.
+## lines: [[seat, text], ...]. Lines without a recording are skipped.
+func speak_lines(lines: Array) -> void:
+	if not Settings.get_value("voice_enabled") or not _recorded_available():
+		return
+	var clips: Array = []
+	for l in lines:
+		var st := _clip(String(l[0]), normalize(String(l[1])))
+		if st != null:
+			clips.append(0.5)
+			clips.append(st)
+	if clips.is_empty():
+		return
+	if _vspeaking:
+		_vqueue.append_array(clips)
+	else:
+		_vqueue = clips
+		_vspeaking = true
+		voice_started.emit()
+		_play_next()
+
+
 func _clips_for(card: Dictionary, seat: String) -> Array:
 	var voice: Dictionary = card.get("voice", {})
 	var parts := [String(voice.get("title", card.get("title", ""))), String(voice.get("text", card.get("text", "")))]

@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.6.0 (2026-11-09)
+
+Tension and conversation, built on the 1.5 diary.
+
+- Crises with a clock: five kinds (hostages, a border standoff, a race for the bomb, a famine, a coup plot against a friend) that run for three or four months. Each opens with a voiced briefing, gives you a month or two to work it, comes to a final decision and then ends well or badly. "Your hand" is the chance, in percent, that it ends well: time in the Situation Room (a diary engagement) and the right country actions strengthen it, each month of neglect weakens it. Outcomes are real: a lost standoff starts a war, a lost breakout makes a new nuclear power.
+- A crisis strip above the map, a Crises section on the Desk with what would help, crisis pins, and the outcome in the month's playback and the newspaper. At most two crises run at once.
+- Hotline calls: for countries that matter (large, nuclear, at war or highly ambitious) the diary offers a negotiation instead of a courtesy call. The leader is an office and a temperament (proud, cornered, warm, pragmatic, hostile, cautious), never a name, face or voice. Two exchanges: how you open, then what you put on the table. Their mood moves with each line and decides the result.
+- Advisors argue: when the cabinet is split on a briefing, the strongest voice for one option and the strongest for another (or against the first) make their case in a line each, shown on the option and spoken in their own voices after the briefing.
+- Two achievements: Cool head (three crises ended well) and On first-name terms (thirty hotline calls). Crises count toward history's grade.
+- Voices: ten crisis briefings and 35 debate lines recorded; `tests/voice_check.gd` covers them.
+- Tests: crisis life cycle, save/load, natural frequency, hotline rules and the debate picker. The interface smoke run (`--screenshot=x,scenario,iso,months,,smoke`) drives briefings, the diary, a hotline call, a crisis and the month playback.
+
 ## 1.5.0 (2026-11-09)
 
 The playability release. A month now has something to do, something to watch and a clear place to look.

@@ -155,7 +155,7 @@ static func _scan(s: GameState, effects: Array, ctx: String, costs: Array, rest:
 			"end":
 				rest.append(chip("Ends your presidency", "bad"))
 			"crisis":
-				rest.append(chip("Changes the crisis", "neutral"))
+				rest.append(chip("Your hand %+d" % int(float(e[1])), "good" if float(e[1]) > 0.0 else "bad"))
 			"chance":
 				rest.append(chip("%d%% gamble" % int(float(e[1]) * 100.0), "neutral"))
 				_scan(s, e[2], ctx, costs, rest, true)

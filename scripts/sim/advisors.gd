@@ -139,6 +139,58 @@ static func advise(s: GameState, iso: String, map_data: Dictionary) -> Array:
 	return out
 
 
+static var _debate_lines: Dictionary = {}
+
+
+## Two advisors make their case on a briefing: [{id, name, title, choice, side ("for" | "against"), line}].
+## The strongest supporter of one option, and the strongest supporter of a different one (or, failing
+## that, the fiercest opponent of the first). Empty when the cabinet is not split. No dice are used.
+static func debate(s: GameState, card: Dictionary) -> Array:
+	if _debate_lines.is_empty():
+		var parsed: Variant = ScenarioLoader.read_json("res://data/scenarios/debate_lines.json")
+		if parsed is Dictionary:
+			_debate_lines = parsed
+	var choices: Array = card.get("choices", [])
+	var best := {}
+	var rival := {}
+	for i in choices.size():
+		var adv: Dictionary = choices[i].get("advisors", {})
+		for id in adv:
+			var a := s.advisor(id)
+			if a.is_empty() or int(a.get("vacant_months", 0)) > 0 or not _debate_lines.has(id):
+				continue
+			if float(adv[id]) > float(best.get("v", 0.0)):
+				best = {"v": float(adv[id]), "id": id, "choice": i, "side": "for"}
+	if best.is_empty():
+		return []
+	for i in choices.size():
+		var adv: Dictionary = choices[i].get("advisors", {})
+		for id in adv:
+			var a := s.advisor(id)
+			if id == best["id"] or a.is_empty() or int(a.get("vacant_months", 0)) > 0 or not _debate_lines.has(id):
+				continue
+			var v := float(adv[id])
+			if i != int(best["choice"]) and v > 0.0 and v > float(rival.get("v", 0.0)):
+				rival = {"v": v, "id": id, "choice": i, "side": "for"}
+	if rival.is_empty():
+		var adv0: Dictionary = choices[int(best["choice"])].get("advisors", {})
+		for id in adv0:
+			var a := s.advisor(id)
+			if id == best["id"] or a.is_empty() or int(a.get("vacant_months", 0)) > 0 or not _debate_lines.has(id):
+				continue
+			if float(adv0[id]) < float(rival.get("v", 0.0)):
+				rival = {"v": float(adv0[id]), "id": id, "choice": int(best["choice"]), "side": "against"}
+	if rival.is_empty():
+		return []
+	var out: Array = []
+	for d in [best, rival]:
+		var a := s.advisor(d["id"])
+		var pool: Array = _debate_lines[d["id"]][d["side"]]
+		var pick := absi(("%s|%s|%d" % [card.get("id", ""), d["id"], s.turn]).hash()) % pool.size()
+		out.append({"id": d["id"], "name": a.get("name", ""), "title": a.get("title", ""), "choice": d["choice"], "side": d["side"], "line": String(pool[pick])})
+	return out
+
+
 static func _a(id: String, text: String, action: String) -> Dictionary:
 	return {"id": id, "text": text, "action": action}
 

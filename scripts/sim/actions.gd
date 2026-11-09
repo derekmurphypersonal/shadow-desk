@@ -439,6 +439,9 @@ static func perform(s: GameState, iso: String, id: String, map_data: Dictionary)
 		s.stats["covert"] = int(s.stats.get("covert", 0)) + 1
 	s.stats["actions"] = int(s.stats.get("actions", 0)) + 1
 	if msg != "":
+		var crisis_note := Crises.on_action(s, iso, id)
+		if crisis_note != "":
+			msg += " " + crisis_note
 		s.add_log(msg, "action", iso)
 		if not def.has("op"):
 			s.fx.append({"iso": iso, "kind": id, "text": def["label"]})

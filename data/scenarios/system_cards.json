@@ -63,5 +63,55 @@
   "speaker": "chief",
   "title": "Your first morning in the Oval Office",
   "text": "Good morning, and welcome to the desk. There is a war in Europe, a rival in the Pacific and a deficit at home. The cabinet wants to know where you will put your first hundred days."
+ },
+ "crisis_hostage_start": {
+  "speaker": "nsa",
+  "title": "Hostage crisis in $NAME",
+  "text": "Armed men have seized a group of Americans in $NAME. They want a ransom and a prisoner release. We have perhaps three months before this ends, one way or the other."
+ },
+ "crisis_hostage_final": {
+  "speaker": "nsa",
+  "title": "Hostage crisis in $NAME: the deadline",
+  "text": "The captors in $NAME have set a deadline of days, not weeks. We have a location, an intermediary and very little time. This is the decision."
+ },
+ "crisis_standoff_start": {
+  "speaker": "defense",
+  "title": "Standoff: $B masses on the border of $NAME",
+  "text": "$B has moved armour to the frontier with $NAME and is making demands. $NAME is asking what its friendship with us is worth. My planners give it three months."
+ },
+ "crisis_standoff_final": {
+  "speaker": "defense",
+  "title": "Standoff over $NAME: the last warning",
+  "text": "Our satellites show $B fuelling its tanks. If they are going to cross into $NAME, it will be soon. Whatever we do next is our last word."
+ },
+ "crisis_breakout_start": {
+  "speaker": "cia",
+  "title": "$NAME races for the bomb",
+  "text": "Our analysts believe $NAME has begun enriching uranium to weapons grade. Left alone, they could test a device within four months."
+ },
+ "crisis_breakout_final": {
+  "speaker": "cia",
+  "title": "$NAME is weeks from a weapon",
+  "text": "The programme in $NAME is close to the point of no return. After this, we will be dealing with a nuclear power."
+ },
+ "crisis_famine_start": {
+  "speaker": "un",
+  "title": "Famine closing in on $NAME",
+  "text": "The rains have failed and the harvest in $NAME is gone. Relief agencies say mass starvation is three months away unless food moves now."
+ },
+ "crisis_famine_final": {
+  "speaker": "un",
+  "title": "$NAME: the famine arrives",
+  "text": "The camps in $NAME are full and the death toll is rising. What we send this month decides how bad this gets."
+ },
+ "crisis_coup_start": {
+  "speaker": "cia",
+  "title": "Coup brewing in $NAME",
+  "text": "Officers in $NAME are plotting against a government that is friendly to us. Our station chief gives it three months before they move."
+ },
+ "crisis_coup_final": {
+  "speaker": "cia",
+  "title": "$NAME: the plotters are ready",
+  "text": "Units loyal to the plotters in $NAME have left their barracks. The government is asking, urgently, where we stand."
  }
 }

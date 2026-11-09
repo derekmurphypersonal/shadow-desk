@@ -6,7 +6,8 @@ signal selection_changed(iso: String)
 signal message(text: String)
 signal game_ended
 signal guidance_go(item: Dictionary)
-signal focus_country(iso: String)                  # select a country and centre the map on it
+signal focus_country(iso: String)
+signal hotline_requested(index: int)               # a diary hotline item: the interface runs the call                  # select a country and centre the map on it
 signal action_done(iso: String, chips: Array)      # what an action or engagement changed, for the map and top bar
 
 const SAVE_DIR := "user://saves"
@@ -100,14 +101,18 @@ func do_action(id: String) -> void:
 		game_ended.emit()
 
 
-## Keep a diary engagement. Returns true if it happened.
-func attend(index: int) -> bool:
+## Keep a diary engagement. Returns true if it happened. A hotline item opens a conversation
+## first (the interface calls finish_hotline when the President hangs up).
+func attend(index: int, direct: bool = false) -> bool:
 	if state == null or state.game_over:
 		return false
 	var check := Diary.available(state, index)
 	if not check["ok"]:
 		message.emit(check["reason"])
 		return false
+	if not direct and String(Diary.items(state)[index]["kind"]) == "hotline":
+		hotline_requested.emit(index)
+		return true
 	var iso := String(Diary.items(state)[index]["iso"])
 	var before := Report.snapshot(state, iso)
 	var msg := Diary.attend(state, index, map_data)
@@ -115,6 +120,13 @@ func attend(index: int) -> bool:
 	message.emit(msg)
 	state_changed.emit()
 	return true
+
+
+func finish_hotline(index: int, result: String) -> void:
+	if state == null:
+		return
+	Diary.items(state)[index]["result"] = result
+	attend(index, true)
 
 
 func stop_op(iso: String, type: String) -> void:

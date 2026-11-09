@@ -27,6 +27,9 @@ func _init() -> void:
 			var first12_cards := 0
 			var first12_months := 0
 			var act_kinds := {}
+			var crises := 0
+			var crises_won := 0
+			var hot := 0
 			var diary_offered := 0
 			var diary_done := 0
 			for sd in seeds:
@@ -88,6 +91,9 @@ func _init() -> void:
 					var before := float(s.us["political_capital"])
 					Simulation.tick(s, map_data, events)
 					pc_regen += float(s.us["political_capital"]) - before
+				crises += int(s.stats.get("crisis_count", 0))
+				crises_won += int(s.stats.get("crises_won", 0))
+				hot += int(s.stats.get("hotline", 0))
 			var m := float(months)
 			print("\n== %s  cabinet handles minor events: %s  (%d seeds, %d months)" % [scen, auto_minor, seeds, months])
 			print("briefing cards per month: %.2f   months with no card: %.0f%%   cards histogram %s" % [cards / m, 100.0 * zero_card / m, str(card_hist)])
@@ -96,6 +102,7 @@ func _init() -> void:
 			print("headlines per month: %.2f (big: %.2f)" % [headlines / m, big / m])
 			print("guided actions per month: %.2f   histogram %s   kinds %s" % [acts / m, str(act_hist), str(act_kinds)])
 			print("diary: %.1f engagements offered, %.1f kept per month" % [diary_offered / m, diary_done / m])
+			print("crises: %.1f per presidency, %.0f%% ended well; hotline calls %.1f per presidency" % [float(crises) / seeds, 100.0 * crises_won / maxf(crises, 1), float(hot) / seeds])
 			print("PC at start of month: %.0f   net PC change per month incl. upkeep: %+.1f" % [pc_start / m, pc_regen / m])
 			print("next steps shown: %.2f per month; %.0f%% were already shown the month before" % [steps / m, 100.0 * steps_same / maxf(steps, 1)])
 	quit()

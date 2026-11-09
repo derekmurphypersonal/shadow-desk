@@ -97,7 +97,7 @@ static func is_big_news(m: Dictionary) -> bool:
 	if m["kind"] in ["war", "scandal"]:
 		return true
 	var tx := String(m["text"])
-	for key in ["MANDATE MET", "treaty ally", "WAR", "ELECTION", "MIDTERMS", "VICTORY", "Coup", "coup", "dissolves", "partnership", "invasion", "defeats", "repels", "ceasefire", "resigns", "Civil war", "assassination", "Western camp", "breaks with"]:
+	for key in ["CRISIS", "MANDATE MET", "treaty ally", "WAR", "ELECTION", "MIDTERMS", "VICTORY", "Coup", "coup", "dissolves", "partnership", "invasion", "defeats", "repels", "ceasefire", "resigns", "Civil war", "assassination", "Western camp", "breaks with"]:
 		if tx.contains(key):
 			return true
 	return false
@@ -253,6 +253,7 @@ func legacy_points() -> float:
 	pts += {"easy": -5.0, "normal": 0.0, "hard": 8.0}.get(difficulty, 0.0)
 	pts += float(stats.get("mandates_done", 0)) * 2.5
 	pts -= float(stats.get("pact_betrayals", 0)) * 4.0
+	pts += float(stats.get("crises_won", 0)) * 1.0 - float(stats.get("crises_lost", 0)) * 1.5
 	if agenda != "strongman":
 		pts -= float(us.get("tyranny", 0.0)) * 0.2
 	return pts
@@ -277,6 +278,8 @@ const ACHIEVEMENTS := [
 	["survivor", "Still standing", "Survive an assassination attempt."],
 	["for_life", "President for life", "Seize a third term and rule to its end."],
 	["restored", "The republic endures", "Bring tyranny from 40 or more back below 5 and finish your presidency."],
+	["crisis", "Cool head", "Bring 3 crises to a good end in one presidency."],
+	["hotline", "On first-name terms", "Make 30 hotline calls in one presidency."],
 ]
 
 
@@ -308,6 +311,8 @@ func earned_achievements() -> Array:
 		"survivor": int(stats.get("attempts_survived", 0)) >= 1,
 		"for_life": ending == "dictator",
 		"restored": served and float(stats.get("max_tyranny", 0.0)) >= 40.0 and float(us.get("tyranny", 0.0)) < 5.0,
+		"crisis": int(stats.get("crises_won", 0)) >= 3,
+		"hotline": int(stats.get("hotline", 0)) >= 30,
 	}
 	for a in ACHIEVEMENTS:
 		if checks.get(a[0], false):

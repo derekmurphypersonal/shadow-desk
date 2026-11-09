@@ -53,6 +53,7 @@ var _shot_spec := ""
 var wheel: ActionWheel
 var desk_strip: Button
 var tutorial_box: Tutorial
+var crisis_bar: HBoxContainer
 var _last_vals: Dictionary = {}      # top-bar figures as last shown, to arrow every change
 var _delta_age: Dictionary = {}
 var _sweeping := false
@@ -104,6 +105,11 @@ func _ready() -> void:
 	desk_strip.tooltip_text = "Open the Desk: this month's diary and what needs your attention."
 	desk_strip.pressed.connect(func(): tabs.current_tab = TAB_DESK)
 	map_holder.add_child(desk_strip)
+	# Live crises sit above the map: what, how far along, how long left, how strong your hand is.
+	crisis_bar = HBoxContainer.new()
+	crisis_bar.position = Vector2(430, 14)
+	crisis_bar.add_theme_constant_override("separation", 8)
+	map_holder.add_child(crisis_bar)
 
 	tabs = TabContainer.new()
 	tabs.custom_minimum_size = Vector2(440, 0)
@@ -153,6 +159,7 @@ func _ready() -> void:
 	Game.guidance_go.connect(_on_guidance)
 	Game.focus_country.connect(func(iso): map.focus(iso))
 	Game.action_done.connect(_on_action_done)
+	Game.hotline_requested.connect(_open_hotline)
 
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--screenshot="):
@@ -394,9 +401,30 @@ func _set_top(key: String, text: String, good: bool, bad: bool, value: float, lo
 	_last_vals[key] = value
 
 
+func _open_hotline(index: int) -> void:
+	if overlay.get_child_count() > 0:
+		return
+	var iso := String(Diary.items(Game.state)[index]["iso"])
+	Game.show_country(iso)
+	wheel.close()
+	var hc := HotlineCall.new().setup(iso)
+	_open_modal(hc, 0.7)
+	hc.closed.connect(func(result):
+		_close_modal()
+		Game.finish_hotline(index, result)
+		Audio.music("situation")
+		tabs.current_tab = TAB_DESK)
+
+
 func _refresh_strip(s: GameState) -> void:
 	if desk_strip == null:
 		return
+	UITheme.clear(crisis_bar)
+	for c in Crises.list(s):
+		var card := DeskPanel.crisis_card(s, c, false)
+		card.custom_minimum_size.x = 250
+		card.tooltip_text = Crises.helps_text(s, c)
+		crisis_bar.add_child(card)
 	var left := Diary.slots_left(s)
 	var pips := ""
 	for i in Diary.SLOTS:
@@ -475,6 +503,12 @@ func _sweep_entries(s: GameState, old_turn: int, mark: int) -> Array:
 		if kind in ["war", "scandal"] or tx.begins_with("Mandate missed") or tx.contains("halted"):
 			tone = "bad"
 			pri = 3
+		elif tx.begins_with("CRISIS ENDS BADLY"):
+			tone = "bad"
+			pri = 4
+		elif tx.begins_with("CRISIS ENDS WELL"):
+			tone = "good"
+			pri = 4
 		elif tx.begins_with("MANDATE MET") or tx.begins_with("VICTORY") or tx.contains("ceasefire") or tx.contains("Western camp"):
 			tone = "good"
 			pri = 3
@@ -678,6 +712,10 @@ func _show_help() -> void:
 	rt.text = """[b]Each month[/b] you answer your briefings, keep up to three diary engagements, act on the world, then press [b]End month[/b] (Enter). The month then plays out on the map; click to skip.
 
 [b]The diary[/b] (Desk tab) offers dated engagements: calls, dinners, intelligence deep-dives, the Hill, town halls. They cost time, not political capital, and time you leave unused becomes a little political capital.
+
+[b]Crises[/b] run for three or four months: an opening briefing, a month or two to work it, a final decision, then an outcome. "Your hand" is your chance that it ends well. Time in the Situation Room (diary) and the right country actions strengthen it; every month of neglect weakens it.
+
+[b]Hotline calls[/b] with the leaders who matter are short negotiations. Read their temperament, choose how to open and what to offer, and watch their mood.
 
 [b]On the map[/b], pins mark what needs you. Click a country for a ring of the four option types; the gold ring is what your cabinet would do. The Country tab has the full dossier.
 
@@ -1282,8 +1320,22 @@ func _dev_screenshot(spec: String) -> void:
 					break
 			if Game.state.game_over:
 				break
+			if m == 1 and Crises.list(Game.state).is_empty():
+				Crises.start(Game.state, "famine", "ETH" if Game.state.is_active("ETH") else "SDN")
+				Game.state_changed.emit()
+				_advance_flow()
+				continue
 			for i in Diary.items(Game.state).size():
 				Game.attend(i)
+				for guard2 in 60:
+					await get_tree().process_frame
+					var open := false
+					for c in overlay.get_children():
+						if c is HotlineCall:
+							open = true
+							c.smoke()
+					if not open:
+						break
 			Game.select(iso)
 			wheel.open(iso)
 			Game.do_action("envoy")
@@ -1300,6 +1352,28 @@ func _dev_screenshot(spec: String) -> void:
 			if c is BriefingCard:
 				c._finish_reveal()
 				c._on_choice(0, null)
+	if view == "crisis":
+		while not Game.state.pending.is_empty():
+			Game.choose(0)
+		Crises.start(Game.state, "standoff", "KWT" if scenario == "classic_1990" else "TWN", "IRQ" if scenario == "classic_1990" else "CHN")
+		Crises.start(Game.state, "famine", "ETH")
+		while not Game.state.pending.is_empty():
+			Game.choose(0)
+		Diary.state(Game.state)["turn"] = -5
+		Diary.roll(Game.state, Game.map_data)
+		Game.select("")
+		Game.state_changed.emit()
+		tabs.current_tab = TAB_DESK
+	if view == "hotline":
+		while not Game.state.pending.is_empty():
+			Game.choose(0)
+		var hc := HotlineCall.new().setup(iso)
+		_open_modal(hc, 0.7)
+		for i in 10:
+			await get_tree().process_frame
+		hc._say("respect")
+		if parts.size() > 6:
+			hc._say(parts[6])
 	if view == "wheel":
 		wheel.open(iso)
 		wheel._open_cat = "Diplomacy"

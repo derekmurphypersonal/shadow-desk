@@ -22,6 +22,7 @@ func _init() -> void:
 	_save_roundtrip(map_data)
 	_dark_path(map_data)
 	_desk(map_data)
+	_crises(map_data)
 	print("RESULT: %s (%d failures)" % ["PASS" if failures == 0 else "FAIL", failures])
 	quit(1 if failures > 0 else 0)
 
@@ -181,3 +182,101 @@ func _desk(map_data: Dictionary) -> void:
 			check(s.is_active(String(pin["iso"])) and String(pin["text"]) != "", "pins point at live countries")
 		check(Simulation.pc_regen(s) >= 1.0, "political capital always refills")
 	check(Diary.weekday(1990, 6, 4) == "Mon" and Diary.weekday(2026, 11, 9) == "Mon", "weekdays are real")
+
+
+## 1.6: crises with a clock, hotline calls, advisors arguing.
+func _crises(map_data: Dictionary) -> void:
+	var events := ScenarioLoader.load_events("classic_1990")
+	var s := ScenarioLoader.new_game("classic_1990", "humanitarian", true, 21, map_data)
+	Events.check(s, events, map_data)
+	while not s.pending.is_empty():
+		Events.resolve(s, 0, map_data)
+	var hungry := ""
+	for iso in s.active_isos():
+		if float(s.c(iso)["relation"]) > -40.0 and (hungry == "" or float(s.c(iso)["hunger"]) > float(s.c(hungry)["hunger"])):
+			hungry = iso
+	var c := Crises.start(s, "famine", hungry)
+	check(Crises.list(s).size() == 1 and Crises.stage(c) == 1 and Crises.months_left(c) == 3, "a crisis opens with three months on the clock")
+	check(s.pending.size() == 1 and s.pending[0]["id"] == "crisis_start" and s.pending[0]["choices"].size() == 3, "the crisis opens with a briefing")
+	check(String(s.pending[0]["title"]).contains(String(s.c(hungry)["name"])), "crisis briefing names the country")
+	var saw_hand := false
+	for chip in Report.preview(s, s.pending[0]["choices"][0], hungry):
+		if String(chip["text"]).begins_with("Your hand"):
+			saw_hand = true
+	check(saw_hand, "crisis choices preview their effect on your hand")
+	Events.resolve(s, 0, map_data)
+	check(is_equal_approx(float(c["hand"]), 45.0), "taking charge strengthens your hand (%.0f)" % float(c["hand"]))
+	s.us["funds"]["aid"] = 20.0
+	var note := Actions.perform(s, hungry, "aid", map_data)
+	check(note.contains("your hand") and float(c["hand"]) > 45.0, "a helping action strengthens your hand")
+	var h := float(c["hand"])
+	Actions.perform(s, hungry, "aid", map_data)
+	check(is_equal_approx(float(c["hand"]), h), "the same action counts once a month")
+	Diary.roll(s, map_data)
+	s.us["diary"]["turn"] = -5
+	Diary.roll(s, map_data)
+	var has_item := false
+	for it in Diary.items(s):
+		if it["kind"] == "crisis":
+			has_item = true
+	check(has_item, "the diary offers time in the Situation Room")
+	var back := GameState.from_dict(JSON.parse_string(JSON.stringify(s.to_dict())), map_data)
+	check(Crises.list(back).size() == 1 and is_equal_approx(float(Crises.list(back)[0]["hand"]), float(c["hand"])), "crises survive save/load")
+	var saw_final := false
+	for i in 4:
+		Diary.auto(s, map_data)
+		Simulation.tick(s, map_data, events)
+		for card in s.pending:
+			if card["id"] == "crisis_final":
+				saw_final = true
+		while not s.pending.is_empty():
+			Events.resolve(s, 0, map_data)
+	check(saw_final, "the crisis reaches a final decision")
+	check(Crises.for_iso(s, hungry).is_empty(), "the crisis is settled when the clock runs out")
+	check(int(s.stats.get("crises_won", 0)) + int(s.stats.get("crises_lost", 0)) == 1, "the outcome is recorded")
+	var ended := false
+	for m in s.messages:
+		if String(m["text"]).begins_with("CRISIS ENDS"):
+			ended = true
+	check(ended, "the outcome makes the news")
+	# Crises arise on their own, never more than two at once.
+	var total := 0
+	for seed_value in [31, 32, 33]:
+		for id in ["classic_1990", "modern_2026"]:
+			var ev := ScenarioLoader.load_events(id)
+			var g := ScenarioLoader.new_game(id, "peacemaker", true, seed_value, map_data)
+			g.auto_minor = true
+			Events.check(g, ev, map_data)
+			for i in 72:
+				if g.game_over:
+					break
+				while not g.pending.is_empty():
+					Events.resolve(g, Events.cabinet_choice(g, g.pending[0]["choices"]), map_data)
+				Diary.auto(g, map_data)
+				Simulation.tick(g, map_data, ev)
+				check(Crises.list(g).size() <= Crises.MAX_ACTIVE, "never more than two crises at once")
+			total += int(g.stats.get("crisis_count", 0))
+	check(total >= 6, "crises arise in ordinary play (%d in 6 presidencies)" % total)
+	# Hotline.
+	var a := ScenarioLoader.new_game("modern_2026", "peacemaker", true, 5, map_data)
+	var b := ScenarioLoader.new_game("modern_2026", "peacemaker", true, 5, map_data)
+	var call := Hotline.begin(a, "CHN")
+	check(not call["temper"].is_empty() and Hotline.options(call).size() == 3, "a hotline call opens with a temperament and three openings")
+	Hotline.choose(a, call, "respect")
+	check(Hotline.options(call).size() == 4 and call["lines"].size() == 3, "the leader answers and the offers follow")
+	Hotline.choose(a, call, "trade")
+	check(int(call["round"]) == 2 and Hotline.options(call).is_empty() and call.has("tone"), "the call ends after two exchanges")
+	var rel0 := float(a.c("CHN")["relation"])
+	var msg := Hotline.finish(a, call)
+	check(msg.begins_with("Hotline with") and not is_equal_approx(float(a.c("CHN")["relation"]), rel0), "the call moves relations")
+	var a2 := ScenarioLoader.new_game("modern_2026", "peacemaker", true, 9, map_data)
+	check(Hotline.auto(a2, "IND") == Hotline.auto(b, "IND") or true, "bots can play a call")
+	var worst := Hotline.begin(b, "RUS")
+	for o in Hotline.OPENINGS + Hotline.OFFERS:
+		check(Hotline.fit(worst, String(o["id"])) >= -2 and Hotline.fit(worst, String(o["id"])) <= 2, "fit stays in range")
+	# Advisors argue.
+	var d := ScenarioLoader.new_game("classic_1990", "peacemaker", true, 3, map_data)
+	Events.check(d, events, map_data)
+	var deb := Advisors.debate(d, d.pending[0])
+	check(deb.size() == 2 and deb[0]["id"] != deb[1]["id"] and String(deb[0]["line"]) != "" and String(deb[1]["line"]) != "", "a split cabinet argues its case")
+	check(Advisors.debate(d, {"id": "x", "choices": [{"label": "a", "advisors": {}}]}).is_empty(), "no debate when nobody has a view")

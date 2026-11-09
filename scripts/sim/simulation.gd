@@ -14,6 +14,9 @@ static func tick(s: GameState, map_data: Dictionary, events: Array) -> void:
 		return
 	_us_funds(s)
 	_ops(s)
+	Crises.tick(s, map_data)
+	if s.game_over:
+		return
 	for iso in s.active_isos():
 		_country(s, iso)
 	_wars(s, map_data)
@@ -36,6 +39,7 @@ static func tick(s: GameState, map_data: Dictionary, events: Array) -> void:
 		return
 	Events.check(s, events, map_data)
 	Events.un_resolution(s)
+	Crises.after(s, map_data)
 	s.us["quiet"] = 0 if not s.pending.is_empty() else int(s.us.get("quiet", 0)) + 1
 	Diary.roll(s, map_data)
 	if int(s.stats.get("term_rolled", 0)) != int(s.stats.get("term", 0)) and not s.game_over:

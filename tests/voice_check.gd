@@ -42,6 +42,14 @@ func _init() -> void:
 				missing += 1
 				if missing <= 20:
 					print("MISSING NAME [%s] %s" % [seat, n])
+	var debate = JSON.parse_string(FileAccess.get_file_as_string("res://data/scenarios/debate_lines.json"))
+	for seat in debate:
+		for side in debate[seat]:
+			for line in debate[seat][side]:
+				checked += 1
+				if audio._clip(seat, audio.normalize(line)) == null:
+					missing += 1
+					print("MISSING DEBATE LINE [%s] %s" % [seat, line])
 	print("voice check: %d cards x seats checked, %d missing" % [checked, missing])
 	print("RESULT: %s" % ("PASS" if missing == 0 else "FAIL"))
 	quit(0 if missing == 0 else 1)
