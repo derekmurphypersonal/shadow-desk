@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.4.0 (2026-11-09)
+
+- Next Steps: a panel on the map and in the Oval Office lists what your cabinet would do next (budget fixes, mandate moves, friends in trouble, advisors about to quit). Click one to jump straight there with the right option ringed.
+- Leader archetypes: the Statesman, Idealist, Reformer, Warlord, Paranoid and Strongman, each with a perk and a flaw.
+- The strongman path: a new Strongman agenda and Executive Power moves (national emergency, muzzle the press, purge the cabinet, pack the courts, crack down, rig or postpone the election, seize a third term, or restore civil liberties). A tyranny meter drives protests, impeachment for abuse of power, restless generals and assassins.
+- Assassinations: leaders abroad are killed by plotters; your CIA can eliminate a hostile leader; presidents face attempts, more often when hated or tyrannical.
+- New endings: deposed in a coup, resigned in disgrace, president for life. Three new achievements.
+- All new briefings are voiced.
+
+## 1.3.0 (2026-11-09)
+
+- Photographic portraits for all 19 advisors (fictional people, generated locally with an open model).
+- Neural voiced briefings: every decision card is pre-recorded, with a distinct natural voice for each cabinet seat. Country names are recorded separately and stitched in, so templated events are voiced too. OS text-to-speech is now only a fallback.
+- Briefings arrive over a secure video link: live call timer, audio waveform, camera drift and a glow that follows the voice.
+- Voice speed now changes pace without changing the advisor's pitch.
+- Replacement advisors match the seat's voice. Defence pacts are no longer offered to hostile countries.
+
+## 1.2.0 (2026-11-06)
+
+- Term mandates: three goals per term (end a war, feed a country, win one back from a rival, widen your circle of friends, balance the books and more), favoured by your agenda. Met mandates pay approval and political capital and count toward your legacy.
+- Defence pacts and credibility: sign pacts with close friends (Senate vote). Pacts deter invasions; when a pact partner is attacked you choose to honour it, arm them, or stay out, and your credibility with every ally moves.
+- UN Security Council resolutions on aggression, famine, peacekeeping and terror.
+- Story arcs: events now set flags that unlock follow-ups (Kuwait, the Soviet collapse, Yugoslavia, the Iran deal, a Ukraine ceasefire, a Taiwan blockade) plus 10 new events.
+- Approval breakdown in the Oval Office and on the top bar, showing exactly what moves your numbers.
+- Presidential Library: a record of every presidency you've played, and 14 achievements.
+- Find a country with Cmd/Ctrl+F. Template events no longer repeat on the same country within three years.
+- Balance: grade thresholds raised; hard difficulty is harder; deterrence depends on credibility.
+
 ## 1.1.0 (2026-10-30)
 
 - Ongoing operations: air campaign, invasion (with a progress bar to the capital), war support, aid programme, charm offensive, covert campaign. Each charges upkeep monthly and can be stopped any time.

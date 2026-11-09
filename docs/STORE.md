@@ -23,9 +23,12 @@ Win re-election, sign peace treaties, end famines, or bend the map toward Washin
 - About 170 simulated countries, seeded with World Bank data
 - Rival powers that court your allies with loans and arms
 - Seven illustrated advisors with voiced briefings
-- 83 events: the Gulf War, the Soviet collapse, Arctic standoffs, AI races, hurricanes and hostage crises
+- 93 events and multi-month story arcs: the Gulf War, the Soviet collapse, Arctic standoffs, AI races, hurricanes and hostage crises
+- Term mandates, defence pacts that test your credibility, and UN Security Council votes
+- A Presidential Library of past runs and 17 achievements
+- Six leader archetypes, and a dark path: emergencies, purges, rigged elections, a third term, and the assassins that follow
 - A monthly newspaper, election-night returns and a final grade from history
-- Four agendas, three difficulty levels, six endings
+- Five agendas, three difficulty levels, nine endings
 - Plays in about 2-4 hours per presidency; fully moddable JSON scenarios
 
 ## System requirements

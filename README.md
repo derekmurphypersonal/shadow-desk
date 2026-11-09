@@ -4,7 +4,7 @@
 
 **The world is on your desk.** Shadow Desk is a geopolitical strategy game in the spirit of the early-90s presidential world-power simulations. You run US foreign policy one month at a time: read your daily brief, weigh seven advisors who each want something different, and decide where to send envoys, aid, sanctions, spies or the Marines. Then the world answers.
 
-Version 1.1.0 · Godot 4.7 · macOS, Windows, Linux
+Version 1.4.0 · Godot 4.7 · macOS, Windows, Linux
 
 ## Features
 
@@ -12,10 +12,16 @@ Version 1.1.0 · Godot 4.7 · macOS, Windows, Linux
 - **A living world.** About 170 countries with economies, stability, hunger, freedom, armies and opinions of you, seeded from World Bank data. Coups, civil wars, invasions and famines happen whether you act or not.
 - **Rival powers.** China, Russia (or the Soviet Union) court countries with loans and arms. Win them back or watch the map turn red.
 - **Sustained operations.** Run air campaigns, full invasions, war support for allies, aid programmes, charm offensives and covert campaigns that continue month after month until you stop them or the money runs out.
-- **A cabinet with opinions.** Seven illustrated advisors brief you, argue, and resign if you ignore them. Your intelligence is only as good as your CIA Director.
-- **Voiced briefings.** Crisis cards arrive as pages of the President's Daily Brief, read aloud by the advisor who wrote them.
-- **83 events**, from the Gulf War and the Soviet coup to Arctic standoffs and deepfakes, plus a monthly newspaper and election-night returns.
-- **Four agendas, three difficulty levels, six ways to end.** Win re-election, get impeached, lose your cabinet, or worse. History grades you at the end.
+- **A cabinet with opinions.** Seven advisors, each with a photographic portrait and their own voice, brief you, argue, and resign if you ignore them. Your intelligence is only as good as your CIA Director.
+- **Voiced briefings.** Crisis cards arrive as pages of the President's Daily Brief, with the advisor who wrote them on a secure video link reading it to you in a natural neural voice.
+- **93 events**, from the Gulf War and the Soviet coup to Arctic standoffs and deepfakes, plus a monthly newspaper and election-night returns.
+- **Term mandates.** Three concrete goals each term, drawn from the live world and flavoured by your agenda. Meet them for approval and political capital.
+- **Defence pacts and credibility.** Sign pacts with close friends. When one is attacked, honour it or watch every ally reconsider.
+- **UN Security Council votes** and multi-month story arcs that remember what you did.
+- **Presidential Library.** Every presidency is recorded, with 14 achievements to earn.
+- **Next Steps.** Never lost: your cabinet's suggested next moves, one click from doing them.
+- **Leader archetypes and the strongman path.** Play an Idealist, a Warlord, a Paranoid or a Strongman. Muzzle the press, pack the courts, rig the election, seize a third term, and live with the protests, impeachment drives, restless generals and assassins that follow.
+- **Five agendas, three difficulty levels, nine ways to end.** Win re-election, get impeached, lose your cabinet, or worse. History grades you at the end.
 
 ## Play from source
 
@@ -49,6 +55,7 @@ Opening the project in the Godot editor also works: Import, select `project.godo
 | `Shift+Enter` | Skip ahead until something needs you (up to 6 months) |
 | `1`–`4` on a briefing | Pick an option; `Space` finishes the typewriter text |
 | `Esc` | Deselect, then pause menu |
+| `Cmd/Ctrl+F` | Find a country |
 | `Cmd/Ctrl+S`, `Cmd/Ctrl+L` | Save, load (the game also autosaves every month) |
 | `F11` | Fullscreen |
 
@@ -74,7 +81,15 @@ Saves and settings live in a `ShadowDesk` folder in the player's app-data direct
 
 ## Voiced briefings
 
-Briefings are read by your operating system's text-to-speech voices, so they work offline and with any event text. macOS and Windows include voices out of the box; on macOS you can add higher-quality voices in System Settings > Accessibility > Spoken Content > System Voice > Manage Voices. Toggle voices, volume and speed in Settings.
+Every briefing is pre-recorded with neural voices, a distinct voice for each cabinet seat, and plays over a secure video link to the advisor. Country names are recorded separately and stitched in, so templated events ("Famine warning: Sudan") are voiced too. The rare line without a recording falls back to your operating system's text-to-speech voice. Toggle voices, volume and speed in Settings.
+
+Recordings and the photographic portraits are generated at build time:
+
+```
+pip install kokoro-onnx soundfile torch diffusers transformers accelerate peft
+python3 tools/build_voices.py --models /path/to/kokoro          # kokoro-v1.0.onnx + voices-v1.0.bin
+python3 tools/build_photo_portraits.py --models /path/to/models  # rv51/, vae/, lcm/
+```
 
 ## Project layout
 
@@ -104,7 +119,7 @@ pip install shapely cairosvg numpy scipy
 python3 tools/fetch_worldbank.py                       # data/source/worldbank.json
 python3 tools/build_map.py ne_110m_admin_0_countries.geojson
 python3 tools/build_scenarios.py ne_110m_admin_0_countries.geojson
-python3 tools/build_portraits.py                       # needs cairosvg
+python3 tools/build_photo_portraits.py                 # photo portraits (see Voiced briefings); build_portraits_vector.py is the old vector set
 python3 tools/build_icons.py
 python3 tools/build_audio.py                           # needs ffmpeg with libvorbis
 ```
