@@ -42,6 +42,10 @@
        [
         "log",
         "A ceasefire takes hold in Ukraine."
+       ],
+       [
+        "flag",
+        "ukraine_ceasefire"
        ]
       ],
       [
@@ -275,6 +279,10 @@
     "us",
     "approval",
     -3
+   ],
+   [
+    "flag",
+    "taiwan_blockade"
    ]
   ],
   "choices": [
@@ -669,6 +677,10 @@
        [
         "log",
         "Iran agrees to new limits."
+       ],
+       [
+        "flag",
+        "iran_deal"
        ]
       ],
       [
@@ -1809,5 +1821,373 @@
     }
    }
   ]
+ },
+ {
+  "id": "iran_cheat",
+  "speaker": "cia",
+  "when": {
+   "after": "2027-06",
+   "chance": 0.1,
+   "if": [
+    [
+     "flag",
+     "iran_deal"
+    ]
+   ]
+  },
+  "title": "Iran caught enriching in secret",
+  "text": "Inspectors have found a hidden centrifuge hall. Tehran says it is a research site. Your critics say the deal is dead.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Snap sanctions back",
+    "effects": [
+     [
+      "sanction",
+      "IRN"
+     ],
+     [
+      "add",
+      "IRN",
+      "ambition",
+      5
+     ],
+     [
+      "us",
+      "approval",
+      1
+     ]
+    ],
+    "advisors": {
+     "treasury": 2,
+     "nsa": 2
+    }
+   },
+   {
+    "label": "Give diplomacy one more chance (10 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -10
+     ],
+     [
+      "chance",
+      0.5,
+      [
+       [
+        "add",
+        "IRN",
+        "ambition",
+        -10
+       ],
+       [
+        "log",
+        "Iran agrees to close the site."
+       ]
+      ],
+      [
+       [
+        "us",
+        "approval",
+        -3
+       ],
+       [
+        "log",
+        "Iran stonewalls; the talks look naive."
+       ]
+      ]
+     ]
+    ],
+    "advisors": {
+     "state": 3,
+     "nsa": -3
+    }
+   },
+   {
+    "label": "Strike the site (15 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -15
+     ],
+     [
+      "add",
+      "IRN",
+      "military",
+      -8
+     ],
+     [
+      "add",
+      "IRN",
+      "relation",
+      -30
+     ],
+     [
+      "us",
+      "standing",
+      -5
+     ]
+    ],
+    "advisors": {
+     "defense": 2,
+     "nsa": 3,
+     "state": -4
+    }
+   }
+  ],
+  "art": "nuclear"
+ },
+ {
+  "id": "ceasefire_violation",
+  "speaker": "defense",
+  "when": {
+   "after": "2027-03",
+   "chance": 0.08,
+   "if": [
+    [
+     "flag",
+     "ukraine_ceasefire"
+    ],
+    [
+     "active",
+     "UKR"
+    ]
+   ]
+  },
+  "title": "Shelling breaks the Ukraine ceasefire",
+  "text": "Artillery has hit frontline towns for three nights running. Each side blames the other; monitors say most rounds came from the east.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Rush air defences to Ukraine",
+    "effects": [
+     [
+      "add",
+      "UKR",
+      "military",
+      6
+     ],
+     [
+      "add",
+      "RUS",
+      "relation",
+      -8
+     ],
+     [
+      "funds",
+      "defense",
+      -2
+     ]
+    ],
+    "advisors": {
+     "defense": 3,
+     "nsa": 2
+    }
+   },
+   {
+    "label": "Demand an investigation by monitors",
+    "effects": [
+     [
+      "us",
+      "standing",
+      2
+     ],
+     [
+      "chance",
+      0.25,
+      [
+       [
+        "war",
+        "RUS",
+        "UKR",
+        -10
+       ]
+      ],
+      []
+     ]
+    ],
+    "advisors": {
+     "un": 3,
+     "state": 2
+    }
+   },
+   {
+    "label": "Look away",
+    "effects": [
+     [
+      "chance",
+      0.5,
+      [
+       [
+        "war",
+        "RUS",
+        "UKR",
+        -10
+       ]
+      ],
+      []
+     ],
+     [
+      "us",
+      "credibility",
+      -8
+     ]
+    ],
+    "advisors": {
+     "nsa": -4
+    }
+   }
+  ],
+  "art": "war"
+ },
+ {
+  "id": "chip_shock",
+  "speaker": "treasury",
+  "when": {
+   "after": "2027-07",
+   "chance": 0.6,
+   "if": [
+    [
+     "flag",
+     "taiwan_blockade"
+    ]
+   ]
+  },
+  "title": "Chip shortage hits the economy",
+  "text": "With Taiwan's foundries cut off, car plants are idling and phone prices have doubled.",
+  "effects": [
+   [
+    "us",
+    "approval",
+    -4
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Emergency chip fund ($5bn)",
+    "effects": [
+     [
+      "funds",
+      "domestic",
+      -5
+     ],
+     [
+      "us",
+      "approval",
+      2
+     ]
+    ],
+    "advisors": {
+     "treasury": -2,
+     "chief": 3
+    }
+   },
+   {
+    "label": "Ration chips to defence first",
+    "effects": [
+     [
+      "us",
+      "approval",
+      -2
+     ]
+    ],
+    "advisors": {
+     "defense": 3,
+     "chief": -2
+    }
+   },
+   {
+    "label": "Blame Beijing and ride it out",
+    "effects": [
+     [
+      "add",
+      "CHN",
+      "relation",
+      -5
+     ],
+     [
+      "us",
+      "approval",
+      -1
+     ]
+    ],
+    "advisors": {
+     "nsa": 1
+    }
+   }
+  ],
+  "art": "tech"
+ },
+ {
+  "id": "arctic_route",
+  "speaker": "treasury",
+  "when": {
+   "after": "2028-01",
+   "chance": 0.04
+  },
+  "title": "Arctic shipping lane opens",
+  "text": "For the first time, container ships crossed the Arctic in midwinter. Whoever controls the route controls a new trade artery.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Build an Arctic port and icebreakers ($3bn)",
+    "effects": [
+     [
+      "funds",
+      "defense",
+      -3
+     ],
+     [
+      "add",
+      "CAN",
+      "relation",
+      5
+     ],
+     [
+      "add",
+      "DNK",
+      "relation",
+      5
+     ],
+     [
+      "add",
+      "RUS",
+      "relation",
+      -4
+     ]
+    ],
+    "advisors": {
+     "defense": 2,
+     "treasury": 1
+    }
+   },
+   {
+    "label": "Propose shared Arctic rules (5 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -5
+     ],
+     [
+      "us",
+      "standing",
+      3
+     ],
+     [
+      "us",
+      "treaties",
+      1
+     ]
+    ],
+    "advisors": {
+     "state": 3,
+     "un": 2
+    }
+   }
+  ],
+  "art": "naval"
  }
 ]

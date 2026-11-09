@@ -1,0 +1,57 @@
+{
+ "un_aggression": {
+  "speaker": "un",
+  "title": "Security Council: condemn $NAME",
+  "text": "A resolution demands $NAME withdraw from $B and threatens sanctions. Your vote, or your veto, decides it."
+ },
+ "un_famine": {
+  "speaker": "un",
+  "title": "Security Council: famine relief for $NAME",
+  "text": "Members want a UN relief operation in $NAME. It needs US money and logistics to work."
+ },
+ "un_peacekeeping": {
+  "speaker": "un",
+  "title": "Security Council: peacekeepers for $NAME",
+  "text": "A resolution would send blue-helmet peacekeepers into the civil war in $NAME, with US airlift support."
+ },
+ "un_terror": {
+  "speaker": "un",
+  "title": "Security Council: sanctions on $NAME",
+  "text": "A resolution would impose UN sanctions on $NAME for sheltering armed groups that attack civilians abroad."
+ },
+ "pact_test": {
+  "speaker": "nsa",
+  "title": "$NAME invades our treaty ally $B",
+  "text": "$B has invoked our defence pact. Every ally and every rival is watching what the United States does next."
+ },
+ "election_review": {
+  "speaker": "chief",
+  "title": "Election night: you win",
+  "text": "Congratulations, Mr. President. You have a second term. The panel's verdict on your first is on your desk."
+ },
+ "protests": {
+  "speaker": "chief",
+  "title": "Mass protests in Washington",
+  "text": "Hundreds of thousands are in the streets demanding that you restore the freedoms you have suspended. The crowds grow every night, and the networks are covering nothing else."
+ },
+ "impeach": {
+  "speaker": "chief",
+  "title": "Articles of impeachment",
+  "text": "The House has drafted articles of impeachment for abuse of power. My whip count is grim, Mr. President. We need to decide how this ends."
+ },
+ "generals": {
+  "speaker": "defense",
+  "title": "The generals are restless",
+  "text": "Senior commanders are meeting without me. Some of them talk openly about restoring constitutional order. I can't promise you the chain of command holds."
+ },
+ "attempt": {
+  "speaker": "chief",
+  "title": "Shots fired at the motorcade",
+  "text": "An assassin opened fire on your motorcade this morning. The Secret Service got you out, but an agent was wounded. The country is shaken and waiting to hear from you."
+ },
+ "leader_killed": {
+  "speaker": "cia",
+  "title": "The leader of $NAME has been assassinated",
+  "text": "Gunmen killed the head of government of $NAME a few hours ago. The capital is locked down and rival factions are already moving. We have a narrow window to shape what comes next."
+ }
+}

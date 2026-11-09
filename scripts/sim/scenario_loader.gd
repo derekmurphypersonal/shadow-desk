@@ -45,7 +45,7 @@ static func load_events(scenario_id: String) -> Array:
 	return out
 
 
-static func new_game(scenario_id: String, agenda: String, elections: bool, seed_value: int, map_data: Dictionary, difficulty: String = "normal") -> GameState:
+static func new_game(scenario_id: String, agenda: String, elections: bool, seed_value: int, map_data: Dictionary, difficulty: String = "normal", persona: String = "statesman") -> GameState:
 	var base := "%s/%s" % [SCENARIO_ROOT, scenario_id]
 	var s := GameState.new()
 	s.scenario = read_json(base + "/scenario.json")
@@ -74,11 +74,14 @@ static func new_game(scenario_id: String, agenda: String, elections: bool, seed_
 		"funds": {"aid": 2.0, "covert": 1.0, "defense": 3.0, "domestic": 5.0},
 		"scandal": 0.0,
 		"standing": 60.0,
+		"credibility": 70.0,
 		"treaties": 0,
 		"peace_months": 0,
 		"troops": {},
 		"ops": [],
 		"mood": 0.0,
+		"persona": persona,
+		"tyranny": 0.0,
 	}
 	for iso in s.countries:
 		var d: Dictionary = s.countries[iso]
@@ -89,11 +92,15 @@ static func new_game(scenario_id: String, agenda: String, elections: bool, seed_
 		d["us_backed"] = false
 		d["rival_pull"] = 0.0
 		d["rival_bloc"] = ""
+		d["pact"] = false
 	for w in s.scenario.get("wars", []):
 		s.wars.append({"a": w["a"], "b": w["b"], "progress": float(w.get("progress", 0)), "months": int(w.get("months", 0))})
 	s.advisors = Advisors.initial_cabinet()
+	Personas.apply_start(s)
 	s.recompute_map_owner(map_data)
 	s.capture_baseline()
 	s.record_history()
 	s.add_log("You take office. %s." % s.scenario.get("name", ""), "headline")
+	Mandates.roll(s, map_data)
+	s.stats["term_rolled"] = 0
 	return s

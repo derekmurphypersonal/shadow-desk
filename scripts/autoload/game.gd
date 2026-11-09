@@ -5,6 +5,7 @@ signal state_changed
 signal selection_changed(iso: String)
 signal message(text: String)
 signal game_ended
+signal guidance_go(item: Dictionary)
 
 const SAVE_DIR := "user://saves"
 
@@ -12,6 +13,7 @@ var map_data: Dictionary = {}
 var state: GameState
 var events: Array = []
 var selected: String = ""
+var highlight: Dictionary = {}       # {iso, action}: an option the guidance panel pointed at
 
 
 func _ready() -> void:
@@ -21,10 +23,10 @@ func _ready() -> void:
 			state.auto_minor = bool(Settings.get_value("cabinet_minor")))
 
 
-func new_game(scenario_id: String, agenda: String, elections: bool, seed_value: int = -1, difficulty: String = "normal") -> void:
+func new_game(scenario_id: String, agenda: String, elections: bool, seed_value: int = -1, difficulty: String = "normal", persona: String = "statesman") -> void:
 	if seed_value < 0:
 		seed_value = randi()
-	state = ScenarioLoader.new_game(scenario_id, agenda, elections, seed_value, map_data, difficulty)
+	state = ScenarioLoader.new_game(scenario_id, agenda, elections, seed_value, map_data, difficulty, persona)
 	state.auto_minor = bool(Settings.get_value("cabinet_minor"))
 	events = ScenarioLoader.load_events(scenario_id)
 	# Events dated to the opening month fire immediately.
@@ -56,6 +58,19 @@ func end_month() -> void:
 		delete_save()
 	else:
 		save_game("slot1", true)
+	state_changed.emit()
+	if state.game_over:
+		game_ended.emit()
+
+
+func power_move(id: String) -> void:
+	if state == null:
+		return
+	var check := Power.available(state, id)
+	if not check["ok"]:
+		message.emit(check["reason"])
+		return
+	message.emit(Power.perform(state, id))
 	state_changed.emit()
 	if state.game_over:
 		game_ended.emit()
@@ -141,6 +156,45 @@ func save_game(slot: String = "slot1", quiet: bool = false) -> bool:
 	if not quiet:
 		message.emit("Game saved.")
 	return true
+
+
+const LIBRARY_PATH := "user://library.json"
+
+
+func load_library() -> Dictionary:
+	if not FileAccess.file_exists(LIBRARY_PATH):
+		return {"runs": [], "achievements": {}}
+	var d: Variant = JSON.parse_string(FileAccess.get_file_as_string(LIBRARY_PATH))
+	if not d is Dictionary:
+		return {"runs": [], "achievements": {}}
+	if not d.has("runs"):
+		d["runs"] = []
+	if not d.has("achievements"):
+		d["achievements"] = {}
+	return d
+
+
+## File the finished presidency in the Presidential Library. Returns achievements newly unlocked.
+func record_presidency() -> Array:
+	if state == null or not state.game_over or state.stats.get("recorded", false):
+		return []
+	state.stats["recorded"] = true
+	var lib := load_library()
+	var earned := state.earned_achievements()
+	var fresh: Array = []
+	var today := Time.get_date_string_from_system()
+	for a in earned:
+		if not lib["achievements"].has(a[0]):
+			lib["achievements"][a[0]] = today
+			fresh.append(a)
+	lib["runs"].append({"played": today, "scenario": state.scenario.get("name", ""), "agenda": state.agenda,
+		"difficulty": state.difficulty, "grade": state.grade(), "score": int(state.agenda_score()),
+		"ending": state.ending, "months": state.turn, "until": state.date_string(),
+		"approval": int(state.us["approval"]), "achievements": earned.map(func(a): return a[0])})
+	var f := FileAccess.open(LIBRARY_PATH, FileAccess.WRITE)
+	if f:
+		f.store_string(JSON.stringify(lib))
+	return fresh
 
 
 func has_save(slot: String = "slot1") -> bool:

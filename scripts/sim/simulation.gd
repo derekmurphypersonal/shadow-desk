@@ -20,6 +20,7 @@ static func tick(s: GameState, map_data: Dictionary, events: Array) -> void:
 	_new_wars(s, map_data)
 	_rivals(s, map_data)
 	_us_politics(s)
+	Power.monthly(s)
 	Advisors.monthly(s)
 	_endings(s)
 	if s.game_over:
@@ -34,6 +35,16 @@ static func tick(s: GameState, map_data: Dictionary, events: Array) -> void:
 	if s.game_over:
 		return
 	Events.check(s, events, map_data)
+	Events.un_resolution(s)
+	if int(s.stats.get("term_rolled", 0)) != int(s.stats.get("term", 0)) and not s.game_over:
+		Mandates.roll(s, map_data)
+		s.stats["term_rolled"] = int(s.stats.get("term", 0))
+	Mandates.update(s)
+	var pacts := 0
+	for iso in s.active_isos():
+		if s.countries[iso].get("pact", false):
+			pacts += 1
+	s.stats["max_pacts"] = maxi(int(s.stats.get("max_pacts", 0)), pacts)
 	s.score = s.agenda_score()
 	s.record_history()
 
@@ -199,7 +210,7 @@ static func _wars(s: GameState, map_data: Dictionary) -> void:
 		w["months"] = int(w["months"]) + 1
 		for side in [w["a"], w["b"]]:
 			if s.us["troops"].has(side):
-				s.us["mood"] = float(s.us["mood"]) - 0.4
+				s.us["mood"] = float(s.us["mood"]) - 0.4 * Personas.mod(s, "war_mood", 1.0)
 		var a := s.c(w["a"])
 		var b := s.c(w["b"])
 		if float(w["progress"]) >= 100.0:
@@ -242,7 +253,7 @@ static func _new_wars(s: GameState, map_data: Dictionary) -> void:
 			var nd := s.c(n)
 			if nd["bloc"] == d["bloc"] or nd["nuclear"]:
 				continue
-			if s.us["troops"].has(n) and float(d["ambition"]) < 90.0:
+			if (s.us["troops"].has(n) or nd.get("pact", false)) and float(d["ambition"]) < 76.0 + float(s.us.get("credibility", 70.0)) * 0.2:
 				continue
 			if float(nd["military"]) < float(d["military"]) * 0.9 and float(nd["military"]) < best_mil:
 				best = n
@@ -316,10 +327,10 @@ static func _ops(s: GameState) -> void:
 					return
 			"invade":
 				var defence := Actions.invasion_defence(s, iso)
-				op["progress"] = float(op["progress"]) + maxf(2.0, (110.0 - defence) * 0.18) + s.rng.randf_range(-3.0, 3.0)
+				op["progress"] = float(op["progress"]) + (maxf(2.0, (110.0 - defence) * 0.18) + s.rng.randf_range(-3.0, 3.0)) * Personas.mod(s, "invade", 1.0)
 				d["military"] = clamp100(float(d["military"]) - 3.0)
 				d["stability"] = clamp100(float(d["stability"]) - 4.0)
-				s.us["mood"] = float(s.us["mood"]) - (0.6 if int(op["months"]) <= 12 else 1.2)
+				s.us["mood"] = float(s.us["mood"]) - (0.6 if int(op["months"]) <= 12 else 1.2) * Personas.mod(s, "war_mood", 1.0)
 				s.fx.append({"iso": iso, "kind": "strike", "text": ""})
 				if float(op["progress"]) >= 100.0:
 					s.us["ops"].erase(op)
@@ -330,6 +341,7 @@ static func _ops(s: GameState) -> void:
 					d["stability"] = 25.0
 					s.us["approval"] = float(s.us["approval"]) + (6.0 if int(op["months"]) <= 8 else 2.0)
 					s.add_log("VICTORY: US forces take the capital of %s after %d months." % [d["name"], int(op["months"])], "headline")
+					s.stats["invasions_won"] = int(s.stats.get("invasions_won", 0)) + 1
 					s.fx.append({"iso": iso, "kind": "victory", "text": "Victory"})
 			"covert":
 				d["stability"] = clamp100(float(d["stability"]) - 3.0)
@@ -398,6 +410,23 @@ static func start_war(s: GameState, a: String, b: String, progress: float) -> vo
 		return
 	s.wars.append({"a": a, "b": b, "progress": progress, "months": 0})
 	s.add_log("WAR: %s invades %s." % [s.c(a)["name"], s.c(b)["name"]], "war")
+	if s.c(b).get("pact", false):
+		pact_test(s, a, b)
+
+
+## A treaty ally has been attacked. The world is watching whether your word means anything.
+static func pact_test(s: GameState, a: String, b: String) -> void:
+	s.stats["pact_tests"] = int(s.stats.get("pact_tests", 0)) + 1
+	var an: String = s.c(a)["name"]
+	var bn: String = s.c(b)["name"]
+	var card := {"id": "pact_test", "speaker": "nsa", "art": "war", "ctx": b,
+		"choices": [
+			{"label": "Honour the pact: send US forces", "effects": [["deploy", b], ["us", "credibility", 10], ["us", "approval", 2], ["add", a, "relation", -30]], "advisors": {"defense": 4, "nsa": 4, "state": 1}},
+			{"label": "Honour it at arm's length: arms and intelligence", "effects": [["start_op", b, "support"], ["us", "credibility", 4], ["add", a, "relation", -15]], "advisors": {"state": 2, "defense": 2, "chief": 1}},
+			{"label": "Stay out of it", "effects": [["us", "credibility", -30], ["us", "standing", -8], ["us", "approval", -3], ["betray", b]], "advisors": {"nsa": -6, "defense": -5, "state": -3, "chief": 2}},
+		]}
+	Events.system_card(card, "pact_test", {"$NAME": an, "$B": bn})
+	s.pending.append(card)
 
 
 static func end_war(s: GameState, w: Dictionary, text: String) -> void:
@@ -414,16 +443,31 @@ static func budget_deficit_pct(s: GameState) -> float:
 	return float(s.us["deficit_pct_baseline"]) + extra / float(s.us["gdp"]) * 100.0
 
 
-static func approval_target(s: GameState) -> float:
+## What is pushing approval up or down: [label, points]. Approval drifts toward the sum each month.
+static func approval_factors(s: GameState) -> Array:
 	var b: Dictionary = s.us["budget"]
 	var base: Dictionary = s.us["budget_baseline"]
 	var dom_ratio := float(b["domestic"]) / maxf(float(base["domestic"]), 1.0)
-	var t := 48.0 + (dom_ratio - 1.0) * 35.0 - float(s.turn) * 0.03
-	t -= maxf(0.0, budget_deficit_pct(s) - 4.0) * 2.5
-	t -= float(s.us["scandal"]) * 0.25
-	t += float(s.us["mood"])
-	t += s.diff("approval")
-	t += (float(s.us.get("standing", 50.0)) - 50.0) * 0.05
+	var out: Array = [["Baseline", 48.0]]
+	out.append(["Domestic spending", (dom_ratio - 1.0) * 35.0 * Personas.mod(s, "domestic", 1.0)])
+	out.append(["Deficit (%.1f%% of GDP)" % budget_deficit_pct(s), -maxf(0.0, budget_deficit_pct(s) - 4.0) * 2.5])
+	out.append(["Scandal", -float(s.us["scandal"]) * 0.25 * Personas.mod(s, "scandal_pen", 1.0)])
+	if Power.tyranny(s) > 0.5:
+		out.append(["Authoritarian rule", -Power.tyranny(s) * 0.12 * Personas.mod(s, "tyranny_pen", 1.0)])
+	if Personas.mod(s, "approval", 0.0) != 0.0:
+		out.append([Personas.name_of(s), Personas.mod(s, "approval", 0.0)])
+	out.append(["Recent events and wars", float(s.us["mood"])])
+	out.append(["World standing", (float(s.us.get("standing", 50.0)) - 50.0) * 0.05])
+	out.append(["Time in office", -float(s.turn) * 0.03])
+	if s.diff("approval") != 0.0:
+		out.append(["Difficulty", s.diff("approval")])
+	return out
+
+
+static func approval_target(s: GameState) -> float:
+	var t := 0.0
+	for f in approval_factors(s):
+		t += float(f[1])
 	return clampf(t, 5.0, 90.0)
 
 
@@ -434,9 +478,11 @@ static func _us_politics(s: GameState) -> void:
 	u["approval"] = clamp100(appr)
 	u["mood"] = float(u["mood"]) * 0.9
 	u["congress"] = clamp100(float(u["congress"]) + (appr - float(u["congress"])) * 0.05)
-	var regen := (5.0 + (appr - 50.0) * 0.08 + (float(u["congress"]) - 50.0) * 0.04) * s.diff("pc")
+	var regen := (5.0 + (appr - 50.0) * 0.08 + (float(u["congress"]) - 50.0) * 0.04) * s.diff("pc") * Personas.mod(s, "pc", 1.0)
 	u["political_capital"] = clamp100(float(u["political_capital"]) + regen)
-	u["standing"] = clamp100(float(u.get("standing", 50.0)) + (55.0 - float(u.get("standing", 50.0))) * 0.02)
+	var stand_target := 55.0 + Personas.mod(s, "standing_drift", 0.0) - Power.tyranny(s) * 0.3
+	u["standing"] = clamp100(float(u.get("standing", 50.0)) + (stand_target - float(u.get("standing", 50.0))) * 0.02)
+	u["credibility"] = clamp100(float(u.get("credibility", 70.0)) + (60.0 - float(u.get("credibility", 70.0))) * 0.01)
 	u["scandal"] = maxf(0.0, float(u["scandal"]) - 1.0)
 	u["gdp"] = float(u["gdp"]) * (1.0 + 2.2 / 1200.0)
 	if s.wars.is_empty():
@@ -446,11 +492,12 @@ static func _us_politics(s: GameState) -> void:
 static func _endings(s: GameState) -> void:
 	var u: Dictionary = s.us
 	if float(u["scandal"]) >= 100.0:
-		if float(u["congress"]) < 40.0:
+		if float(u["congress"]) < (25.0 if u.get("courts_packed", false) else 40.0):
 			trigger_ending(s, "impeached", "Congress impeached and removed you after the scandals piled up.")
 			return
 		u["scandal"] = 70.0
 		u["approval"] = float(u["approval"]) - 8.0
+		s.stats["impeach_survived"] = int(s.stats.get("impeach_survived", 0)) + 1
 		s.add_log("You survive impeachment hearings, badly bruised.", "scandal")
 	var recent := 0
 	for t in s.resignations:
@@ -459,19 +506,9 @@ static func _endings(s: GameState) -> void:
 	if recent >= 4:
 		trigger_ending(s, "cabinet", "Four cabinet resignations in a year. Your party forced you out.")
 		return
-	# Assassination risk from hostile, terror-sponsoring states.
-	var risk := 0.0
-	for iso in s.active_isos():
-		var d: Dictionary = s.countries[iso]
-		if float(d["terror"]) > 60.0 and float(d["relation"]) < -30.0:
-			risk += (float(d["terror"]) - 60.0) * 0.002
-	risk *= (1.3 - Advisors.intel_accuracy(s) / 100.0) * s.diff("risk")
-	if s.rng.randf() * 100.0 < risk:
-		if s.rng.randf() < 0.3:
-			trigger_ending(s, "assassinated", "You were killed in an attack by a foreign-backed cell.")
-			return
-		u["approval"] = float(u["approval"]) + 6.0
-		s.add_log("You survive an assassination attempt. The country rallies.", "headline")
+	# Assassins: foreign-backed cells, domestic extremists, and the enemies a tyrant makes.
+	if Power.assassination_check(s):
+		return
 	# Nuclear escalation: a nuclear power facing defeat at US-backed hands.
 	for w in s.wars:
 		var loser := ""
@@ -496,19 +533,27 @@ static func _elections(s: GameState) -> void:
 	if s.turn < s.next_election_turn:
 		return
 	if s.turn >= s.end_turn:
-		trigger_ending(s, "retired", "Your second term is over. You leave office with %d%% approval." % int(s.us["approval"]))
+		if s.us.get("third_term", false):
+			trigger_ending(s, "dictator", "You ruled without elections to the end, then handed power to a chosen successor. Tyranny %d, approval %d%%." % [int(Power.tyranny(s)), int(s.us["approval"])])
+		else:
+			trigger_ending(s, "retired", "Your second term is over. You leave office with %d%% approval." % int(s.us["approval"]))
 		return
 	s.next_election_turn += 48
+	s.stats["term"] = int(s.stats.get("term", 0)) + 1
 	if not s.elections_enabled:
 		return
 	var vote := float(s.us["approval"]) + 3.0 - s.diff("challenger") + s.rng.randf_range(-4.0, 4.0)
+	if s.us.get("rigged", false):
+		vote += 7.0
+		s.us["rigged"] = false
 	s.last_election = {"vote": vote, "won": vote >= 50.0, "turn": s.turn}
 	if vote < 50.0:
 		trigger_ending(s, "defeated", "You lost the election with %.1f%% of the vote." % vote)
 		return
 	s.elections_won += 1
 	s.add_log("ELECTION: you win re-election with %.1f%% of the vote." % vote, "headline")
-	s.pending.append({"id": "election_review", "title": "Election night: you win", "ctx": "",
+	s.pending.append({"id": "election_review", "title": "Election night: you win", "ctx": "", "speaker": "chief",
+		"voice": {"title": "Election night: you win", "text": "Congratulations, Mr. President. You have a second term. The panel's verdict on your first is on your desk.", "vars": {}},
 		"text": "With %.1f%% of the vote, you have a second term. The panel's verdict on your first: approval %d%%, %d treaties, %d active wars, agenda score %d." % [vote, int(s.us["approval"]), int(s.us["treaties"]), s.wars.size(), int(s.agenda_score())],
 		"choices": [{"label": "Begin the second term", "effects": [], "advisors": {}}]})
 

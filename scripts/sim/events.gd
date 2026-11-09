@@ -24,11 +24,15 @@ static func check(s: GameState, events: Array, map_data: Dictionary) -> void:
 				continue
 			var candidates: Array = []
 			for iso in s.active_isos():
+				var key := "%s@%s" % [ev["id"], iso]
+				if s.fired_events.has(key) and s.turn - int(s.fired_events[key]) < 36:
+					continue
 				if conditions_met(s, ev.get("if", []), iso):
 					candidates.append(iso)
 			if candidates.is_empty():
 				continue
 			var iso: String = candidates[s.rng.randi_range(0, candidates.size() - 1)]
+			s.fired_events["%s@%s" % [ev["id"], iso]] = s.turn
 			fire(s, ev, iso, map_data)
 			templates_fired += 1
 			continue
@@ -47,6 +51,28 @@ static func check(s: GameState, events: Array, map_data: Dictionary) -> void:
 		if when.has("chance") and s.rng.randf() >= float(when["chance"]):
 			continue
 		fire(s, ev, "", map_data)
+
+
+static var _system_cards: Dictionary = {}
+
+
+## Fill a code-generated card's title/text from data/scenarios/system_cards.json, keeping the
+## template so the voice bank can play pre-recorded lines around the country names.
+static func system_card(card: Dictionary, key: String, vars: Dictionary) -> void:
+	if _system_cards.is_empty():
+		var f := FileAccess.open("res://data/scenarios/system_cards.json", FileAccess.READ)
+		if f:
+			_system_cards = JSON.parse_string(f.get_as_text())
+	var t: Dictionary = _system_cards.get(key, {"title": key, "text": ""})
+	var title := String(t["title"])
+	var text := String(t["text"])
+	for k in vars:
+		title = title.replace(k, String(vars[k]))
+		text = text.replace(k, String(vars[k]))
+	card["title"] = title
+	card["text"] = text
+	card["speaker"] = String(t.get("speaker", card.get("speaker", "nsa")))
+	card["voice"] = {"title": String(t["title"]), "text": String(t["text"]), "vars": vars}
 
 
 static func fire(s: GameState, ev: Dictionary, iso: String, map_data: Dictionary) -> void:
@@ -70,6 +96,7 @@ static func fire(s: GameState, ev: Dictionary, iso: String, map_data: Dictionary
 		s.add_log("%s. Your cabinet handled it: %s." % [title, String(choices[best]["label"]).trim_suffix(".")], "cabinet")
 		return
 	s.pending.append({"id": ev["id"], "title": title, "text": text, "ctx": iso, "speaker": ev.get("speaker", "nsa"),
+		"voice": {"title": String(ev.get("title", "")), "text": String(ev.get("text", "")), "vars": {"$NAME": name}},
 		"art": ev.get("art", art_for(String(ev["id"]), title)), "choices": choices})
 	s.add_log(title, "headline")
 
@@ -194,6 +221,12 @@ static func conditions_met(s: GameState, conds: Array, ctx: String) -> bool:
 			"system":
 				if not s.has_system(cnd[1]):
 					return false
+			"flag":
+				if not s.flags.has(String(cnd[1])):
+					return false
+			"no_flag":
+				if s.flags.has(String(cnd[1])):
+					return false
 	return true
 
 
@@ -243,7 +276,7 @@ static func apply(s: GameState, effects: Array, ctx: String, map_data: Dictionar
 			"us":
 				var field: String = e[1]
 				var nv := float(s.us.get(field, 0.0)) + float(e[2])
-				if field in ["approval", "political_capital", "congress", "standing", "scandal"]:
+				if field in ["approval", "political_capital", "congress", "standing", "scandal", "credibility", "tyranny"]:
 					nv = clampf(nv, 0.0, 100.0)
 				if field == "treaties":
 					s.us[field] = int(nv)
@@ -267,6 +300,28 @@ static func apply(s: GameState, effects: Array, ctx: String, map_data: Dictionar
 					s.us["troops"][iso] = 1
 			"withdraw":
 				s.us["troops"].erase(_iso(e[1], ctx))
+			"start_op":
+				var iso := _iso(e[1], ctx)
+				if s.is_active(iso) and Actions.op_for(s, iso, String(e[2])).is_empty():
+					if not s.us.has("ops"):
+						s.us["ops"] = []
+					s.us["ops"].append({"type": String(e[2]), "iso": iso, "months": 0, "progress": 0.0})
+			"flag":
+				s.flags[String(e[1])] = e[2] if e.size() > 2 else true
+			"pact":
+				var pd := s.c(_iso(e[1], ctx))
+				if not pd.is_empty():
+					pd["pact"] = bool(e[2])
+			"betray":
+				s.stats["pact_betrayals"] = int(s.stats.get("pact_betrayals", 0)) + 1
+				var bd := s.c(_iso(e[1], ctx))
+				if not bd.is_empty():
+					bd["pact"] = false
+					bd["relation"] = clampf(float(bd["relation"]) - 30.0, -100.0, 100.0)
+				for iso2 in s.active_isos():
+					if s.countries[iso2].get("pact", false):
+						s.countries[iso2]["relation"] = clampf(float(s.countries[iso2]["relation"]) - 12.0, -100.0, 100.0)
+				s.add_log("Allies question whether a US guarantee means anything.", "headline")
 			"regime":
 				var iso := _iso(e[1], ctx)
 				if s.is_active(iso):
@@ -291,6 +346,10 @@ static func apply(s: GameState, effects: Array, ctx: String, map_data: Dictionar
 						s.countries[iso]["bloc"] = e[2]
 			"trust":
 				Advisors.adjust(s, e[1], float(e[2]))
+			"power":
+				Power.apply_move(s, String(e[1]))
+			"end":
+				Simulation.trigger_ending(s, String(e[1]), String(e[2]))
 			"log":
 				s.add_log(String(e[1]).replace("$NAME", String(s.c(ctx).get("name", ""))), "info")
 			"chance":
@@ -335,3 +394,63 @@ static func split_group(s: GameState, g: String, map_data: Dictionary) -> void:
 	s.recompute_map_owner(map_data)
 	if not members.has(g):
 		s.add_log("%s dissolves." % gd.get("name", g), "headline")
+
+
+## UN Security Council: a resolution built from the current world, about every ten months.
+static func un_resolution(s: GameState) -> void:
+	if s.game_over or s.pending.size() >= 2:
+		return
+	if s.fired_events.has("un") and s.turn - int(s.fired_events["un"]) < 6:
+		return
+	if s.rng.randf() > 0.12:
+		return
+	var options: Array = []
+	for w in s.wars:
+		options.append(["aggression", w["a"], w["b"]])
+	for iso in s.active_isos():
+		var d := s.c(iso)
+		if float(d["hunger"]) > 60.0 and float(d["pop"]) > 5.0:
+			options.append(["famine", iso, ""])
+		if d.get("civil_war", false):
+			options.append(["peacekeeping", iso, ""])
+		if float(d["terror"]) > 65.0:
+			options.append(["terror", iso, ""])
+	if options.is_empty():
+		return
+	var pick: Array = options[s.rng.randi_range(0, options.size() - 1)]
+	var iso: String = pick[1]
+	var name: String = s.c(iso)["name"]
+	var card := {"id": "un", "speaker": "un", "art": "diplomacy", "ctx": iso}
+	match pick[0]:
+		"aggression":
+			var victim: String = s.c(pick[2])["name"]
+			system_card(card, "un_aggression", {"$NAME": name, "$B": victim})
+			card["choices"] = [
+				{"label": "Vote yes", "effects": [["add", iso, "relation", -12], ["add", pick[2], "relation", 8], ["us", "standing", 4], ["add", iso, "ambition", -4]], "advisors": {"un": 4, "state": 2}},
+				{"label": "Abstain", "effects": [["us", "standing", -1]], "advisors": {"un": -1}},
+				{"label": "Veto it", "effects": [["add", iso, "relation", 12], ["add", pick[2], "relation", -15], ["us", "standing", -8]], "advisors": {"un": -6, "state": -3}},
+			]
+		"famine":
+			system_card(card, "un_famine", {"$NAME": name})
+			card["choices"] = [
+				{"label": "Vote yes and pay the largest share ($1bn)", "effects": [["funds", "aid", -1], ["add", iso, "hunger", -12], ["add", iso, "relation", 8], ["us", "standing", 4]], "advisors": {"un": 4, "state": 2, "treasury": -1}},
+				{"label": "Vote yes, let others pay", "effects": [["add", iso, "hunger", -4], ["us", "standing", 1]], "advisors": {"un": 1}},
+				{"label": "Veto: no open-ended missions", "effects": [["us", "standing", -6], ["add", iso, "relation", -8]], "advisors": {"un": -5, "treasury": 2}},
+			]
+		"peacekeeping":
+			system_card(card, "un_peacekeeping", {"$NAME": name})
+			card["choices"] = [
+				{"label": "Vote yes and provide airlift ($1bn)", "effects": [["funds", "defense", -1], ["add", iso, "stability", 10], ["us", "standing", 4], ["chance", 0.35, [["civil_war", iso, false], ["log", "Peacekeepers help end the fighting in $NAME."], ["us", "treaties", 1]], []]], "advisors": {"un": 4, "defense": -1}},
+				{"label": "Abstain", "effects": [], "advisors": {"un": -1}},
+				{"label": "Veto", "effects": [["us", "standing", -6]], "advisors": {"un": -5, "chief": 1}},
+			]
+		"terror":
+			system_card(card, "un_terror", {"$NAME": name})
+			card["choices"] = [
+				{"label": "Vote yes", "effects": [["sanction", iso], ["add", iso, "terror", -8], ["us", "standing", 3]], "advisors": {"un": 3, "nsa": 2}},
+				{"label": "Abstain", "effects": [], "advisors": {"nsa": -1}},
+				{"label": "Veto: we'll handle it ourselves", "effects": [["us", "standing", -5]], "advisors": {"un": -4, "nsa": 1}},
+			]
+	s.fired_events["un"] = s.turn
+	s.pending.append(card)
+	s.add_log(String(card["title"]), "headline")

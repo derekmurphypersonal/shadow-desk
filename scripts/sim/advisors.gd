@@ -13,6 +13,10 @@ const ROLES := {
 	"un": {"title": "UN Ambassador", "name": "Samuel Ito"},
 }
 const ORDER := ["chief", "state", "defense", "treasury", "nsa", "cia", "un"]
+const FEMALE := ["Margaret Holloway", "Evelyn Strand", "Ruth Abernathy", "Grace Whitfield", "Hannah Cole",
+	"Ingrid Sato", "Lena Kowalski", "Priya Raman", "June Halvorsen"]
+## Each seat has a recorded voice; replacements are drawn to match it.
+const FEMALE_SEATS := ["chief", "treasury", "cia"]
 const REPLACEMENTS := ["Alan Pryce", "Grace Whitfield", "Tomas Reyes", "Hannah Cole", "Marcus Bell",
 	"Ingrid Sato", "Paul Navarro", "Lena Kowalski", "Owen Marsh", "Priya Raman", "Carl Dunmore", "June Halvorsen"]
 
@@ -29,8 +33,11 @@ const REACTIONS := {
 	"strike": {"defense": 2, "nsa": 2, "state": -3, "un": -4, "chief": -1},
 	"fund_opposition": {"cia": 3, "state": -2},
 	"coup": {"cia": 4, "state": -4, "un": -4},
+	"assassinate": {"cia": 3, "nsa": 1, "state": -5, "un": -6, "chief": -2},
 	"cyber": {"cia": 2, "nsa": 2, "state": -1},
 	"peace": {"state": 4, "un": 4, "chief": 1},
+	"pact": {"state": 3, "defense": 2, "nsa": 2},
+	"end_pact": {"state": -4, "defense": -3, "nsa": -3, "chief": 1},
 }
 
 
@@ -47,6 +54,9 @@ static func intel_accuracy(s: GameState) -> float:
 	var acc := 45.0 + float(cia.get("trust", 50.0)) * 0.35 + (budget_ratio - 1.0) * 60.0
 	if int(cia.get("vacant_months", 0)) > 0:
 		acc -= 20.0
+	if cia.get("loyalist", false):
+		acc -= 15.0
+	acc += Personas.mod(s, "intel", 0.0)
 	return clampf(acc, 10.0, 100.0)
 
 
@@ -160,12 +170,16 @@ static func monthly(s: GameState) -> void:
 		if int(adv["vacant_months"]) > 0:
 			adv["vacant_months"] = int(adv["vacant_months"]) - 1
 			if int(adv["vacant_months"]) == 0:
-				adv["name"] = REPLACEMENTS[s.rng.randi_range(0, REPLACEMENTS.size() - 1)]
+				var fits: Array = REPLACEMENTS.filter(func(n): return (n in FEMALE) == (String(adv["id"]) in FEMALE_SEATS))
+				adv["name"] = fits[s.rng.randi_range(0, fits.size() - 1)]
 				adv["trust"] = 60.0
+				adv["loyalist"] = false
 				s.add_log("%s is confirmed as %s." % [adv["name"], adv["title"]], "cabinet")
 			continue
 		var trust := float(adv["trust"])
-		trust += (60.0 - trust) * 0.02
+		trust += (60.0 - trust) * 0.02 + Personas.mod(s, "trust_drift", 0.0)
+		if adv.get("loyalist", false):
+			trust = maxf(trust, 40.0)
 		if float(s.us["scandal"]) > 60.0:
 			trust -= 1.0
 		adv["trust"] = trust

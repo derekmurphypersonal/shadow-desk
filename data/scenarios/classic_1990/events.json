@@ -319,6 +319,10 @@
     "us",
     "approval",
     3
+   ],
+   [
+    "flag",
+    "ussr_gone"
    ]
   ],
   "speaker": "state"
@@ -359,6 +363,10 @@
     "civil_war",
     "BIH",
     true
+   ],
+   [
+    "flag",
+    "yugo_war"
    ]
   ],
   "choices": [
@@ -727,6 +735,14 @@
       "IRQ",
       "relation",
       -30
+     ],
+     [
+      "flag",
+      "kuwait_liberated"
+     ],
+     [
+      "flag",
+      "gulf_war"
      ]
     ],
     "advisors": {
@@ -856,6 +872,14 @@
       "IRQ",
       "relation",
       -30
+     ],
+     [
+      "flag",
+      "kuwait_liberated"
+     ],
+     [
+      "flag",
+      "gulf_war"
      ]
     ],
     "advisors": {
@@ -1934,5 +1958,352 @@
     }
    }
   ]
+ },
+ {
+  "id": "iraq_uprising",
+  "speaker": "cia",
+  "when": {
+   "after": "1991-03",
+   "chance": 0.6,
+   "if": [
+    [
+     "flag",
+     "gulf_war"
+    ],
+    [
+     "active",
+     "IRQ"
+    ]
+   ]
+  },
+  "title": "Uprisings sweep Iraq",
+  "text": "Shia rebels in the south and Kurds in the north have risen against Baghdad after its defeat. Iraqi helicopter gunships are moving against them.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Protect them with no-fly zones (10 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -10
+     ],
+     [
+      "add",
+      "IRQ",
+      "stability",
+      -12
+     ],
+     [
+      "add",
+      "IRQ",
+      "military",
+      -5
+     ],
+     [
+      "us",
+      "standing",
+      3
+     ],
+     [
+      "flag",
+      "no_fly"
+     ]
+    ],
+    "advisors": {
+     "defense": 3,
+     "un": 2,
+     "state": 1
+    }
+   },
+   {
+    "label": "Encourage them, but stay out",
+    "effects": [
+     [
+      "add",
+      "IRQ",
+      "stability",
+      -6
+     ],
+     [
+      "chance",
+      0.6,
+      [
+       [
+        "us",
+        "standing",
+        -5
+       ],
+       [
+        "log",
+        "The uprisings are crushed; critics say the US encouraged them and walked away."
+       ]
+      ],
+      []
+     ]
+    ],
+    "advisors": {
+     "chief": 1,
+     "state": -2
+    }
+   },
+   {
+    "label": "Stay silent",
+    "effects": [
+     [
+      "us",
+      "standing",
+      -2
+     ]
+    ],
+    "advisors": {
+     "un": -2
+    }
+   }
+  ],
+  "art": "war"
+ },
+ {
+  "id": "loose_nukes",
+  "speaker": "nsa",
+  "when": {
+   "after": "1992-01",
+   "chance": 0.3,
+   "if": [
+    [
+     "flag",
+     "ussr_gone"
+    ]
+   ]
+  },
+  "title": "Loose nukes in the former Soviet Union",
+  "text": "Thousands of warheads sit in poorly guarded depots across four new countries. Unpaid guards are selling whatever they can.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Fund a programme to secure and dismantle them ($2bn)",
+    "effects": [
+     [
+      "funds",
+      "aid",
+      -2
+     ],
+     [
+      "us",
+      "standing",
+      3
+     ],
+     [
+      "us",
+      "treaties",
+      1
+     ],
+     [
+      "flag",
+      "nukes_secured"
+     ]
+    ],
+    "advisors": {
+     "nsa": 4,
+     "state": 3,
+     "treasury": -2
+    }
+   },
+   {
+    "label": "Leave it to Moscow",
+    "effects": [
+     [
+      "chance",
+      0.3,
+      [
+       [
+        "set",
+        "IRN",
+        "nuclear",
+        true
+       ],
+       [
+        "us",
+        "approval",
+        -4
+       ],
+       [
+        "log",
+        "Intelligence suggests Iran has obtained weapons-grade material from a former Soviet depot."
+       ]
+      ],
+      []
+     ]
+    ],
+    "advisors": {
+     "treasury": 2,
+     "nsa": -4
+    }
+   }
+  ],
+  "art": "nuclear"
+ },
+ {
+  "id": "moscow_crisis",
+  "speaker": "state",
+  "when": {
+   "after": "1993-09",
+   "chance": 0.25,
+   "if": [
+    [
+     "active",
+     "RUS"
+    ]
+   ]
+  },
+  "title": "Constitutional crisis in Moscow",
+  "text": "Russia's president has dissolved parliament. Deputies have barricaded themselves inside, and tanks are in the streets.",
+  "effects": [
+   [
+    "add",
+    "RUS",
+    "stability",
+    -8
+   ]
+  ],
+  "choices": [
+   {
+    "label": "Back the president",
+    "effects": [
+     [
+      "add",
+      "RUS",
+      "relation",
+      10
+     ],
+     [
+      "add",
+      "RUS",
+      "freedom",
+      -6
+     ],
+     [
+      "add",
+      "RUS",
+      "stability",
+      4
+     ]
+    ],
+    "advisors": {
+     "state": 2,
+     "nsa": 1
+    }
+   },
+   {
+    "label": "Call for restraint on both sides",
+    "effects": [
+     [
+      "us",
+      "standing",
+      1
+     ]
+    ],
+    "advisors": {
+     "un": 2
+    }
+   },
+   {
+    "label": "Stay out of it",
+    "effects": [],
+    "advisors": {
+     "chief": 1
+    }
+   }
+  ],
+  "art": "protest"
+ },
+ {
+  "id": "dayton",
+  "speaker": "state",
+  "when": {
+   "after": "1995-06",
+   "chance": 0.35,
+   "if": [
+    [
+     "flag",
+     "yugo_war"
+    ],
+    [
+     "civil_war",
+     "BIH"
+    ]
+   ]
+  },
+  "title": "Peace talks at an Ohio air base",
+  "text": "Exhausted by war, the Balkan presidents will meet on a US air base if Washington hosts and guarantees a deal.",
+  "effects": [],
+  "choices": [
+   {
+    "label": "Host the talks and guarantee the deal (15 PC)",
+    "effects": [
+     [
+      "us",
+      "political_capital",
+      -15
+     ],
+     [
+      "civil_war",
+      "BIH",
+      false
+     ],
+     [
+      "add",
+      "BIH",
+      "stability",
+      15
+     ],
+     [
+      "us",
+      "treaties",
+      1
+     ],
+     [
+      "us",
+      "approval",
+      3
+     ],
+     [
+      "us",
+      "standing",
+      5
+     ]
+    ],
+    "advisors": {
+     "state": 5,
+     "un": 3,
+     "defense": -1
+    }
+   },
+   {
+    "label": "Let the Europeans lead",
+    "effects": [
+     [
+      "chance",
+      0.4,
+      [
+       [
+        "civil_war",
+        "BIH",
+        false
+       ],
+       [
+        "log",
+        "A European-brokered deal ends the Bosnian war."
+       ]
+      ],
+      []
+     ]
+    ],
+    "advisors": {
+     "chief": 1
+    }
+   }
+  ],
+  "art": "diplomacy"
  }
 ]

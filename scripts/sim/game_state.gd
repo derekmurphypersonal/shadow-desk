@@ -27,6 +27,9 @@ var agenda: String = "peacemaker"
 var difficulty: String = "normal"
 var history: Array = []                # one snapshot per month for charts
 var last_election: Dictionary = {}     # {vote, won, turn} for the election-night screen
+var mandates: Array = []               # this term's goals (see Mandates)
+var stats: Dictionary = {}             # counters for achievements
+var flags: Dictionary = {}             # story flags set by event choices
 var elections_enabled: bool = true
 var next_election_turn: int = 24
 var end_turn: int = 72
@@ -94,7 +97,7 @@ static func is_big_news(m: Dictionary) -> bool:
 	if m["kind"] in ["war", "scandal"]:
 		return true
 	var tx := String(m["text"])
-	for key in ["WAR", "ELECTION", "MIDTERMS", "VICTORY", "Coup", "coup", "dissolves", "partnership", "invasion", "defeats", "repels", "ceasefire", "resigns", "Civil war", "assassination", "Western camp", "breaks with"]:
+	for key in ["MANDATE MET", "treaty ally", "WAR", "ELECTION", "MIDTERMS", "VICTORY", "Coup", "coup", "dissolves", "partnership", "invasion", "defeats", "repels", "ceasefire", "resigns", "Civil war", "assassination", "Western camp", "breaks with"]:
 		if tx.contains(key):
 			return true
 	return false
@@ -106,7 +109,9 @@ func record_history() -> void:
 		"standing": float(us.get("standing", 50.0)), "pc": float(us["political_capital"]),
 		"hunger": world_weighted("hunger"), "freedom": world_weighted("freedom"),
 		"wars": wars.size(), "score": agenda_score(), "friendly_gdp": friendly_gdp_share(),
+		"tyranny": float(us.get("tyranny", 0.0)),
 	})
+	stats["max_tyranny"] = maxf(float(stats.get("max_tyranny", 0.0)), float(us.get("tyranny", 0.0)))
 	if history.size() > 200:
 		history = history.slice(history.size() - 200)
 
@@ -227,24 +232,88 @@ func agenda_score() -> float:
 			return 10.0 * (world_weighted("freedom") - float(baseline.get("freedom", 0.0)))
 		"hegemon":
 			return 10.0 * (friendly_gdp_share() - float(baseline.get("friendly_gdp", 0.0)))
+		"strongman":
+			return float(us.get("grip", 0.0)) + 8.0 * elections_won + (25.0 if us.get("third_term", false) else 0.0)
 	return 0.0
 
 
 func legacy_points() -> float:
 	## History's verdict on the presidency, used for the end-of-game grade.
-	var base := {"retired": 55.0, "defeated": 35.0, "cabinet": 20.0, "impeached": 10.0, "assassinated": 30.0, "nuclear": 0.0}
+	var base := {"retired": 55.0, "defeated": 35.0, "cabinet": 20.0, "impeached": 10.0, "assassinated": 30.0, "nuclear": 0.0,
+		"deposed": 5.0, "resigned": 15.0, "dictator": 25.0}
 	var pts := float(base.get(ending, 30.0))
 	pts += clampf(agenda_score() / 3.0, -20.0, 30.0)
 	pts += (float(us["approval"]) - 50.0) * 0.4
 	pts += (float(us.get("standing", 50.0)) - 50.0) * 0.2
 	pts += float(elections_won) * 5.0
 	pts += {"easy": -5.0, "normal": 0.0, "hard": 8.0}.get(difficulty, 0.0)
+	pts += float(stats.get("mandates_done", 0)) * 2.5
+	pts -= float(stats.get("pact_betrayals", 0)) * 4.0
+	if agenda != "strongman":
+		pts -= float(us.get("tyranny", 0.0)) * 0.2
 	return pts
+
+
+## Achievements earned by a finished (or running) presidency: [id, title, description].
+const ACHIEVEMENTS := [
+	["two_terms", "Four more years", "Win re-election."],
+	["a_plus", "For the history books", "Finish with an A or A+ from history."],
+	["hard_win", "Lame duck, my foot", "Serve out both terms on Hard."],
+	["peace", "Peace in our time", "Sign 6 peace deals or treaties in one presidency."],
+	["mandates", "Promises kept", "Meet 5 term mandates in one presidency."],
+	["allies", "Hearts and minds", "Have 25 countries with relations of 60 or more."],
+	["hegemon", "Unipolar moment", "Bring the friendly share of world GDP to 75%."],
+	["liberator", "Nation builder", "Win an invasion."],
+	["kuwait", "Desert Storm", "Liberate Kuwait."],
+	["clean", "Clean hands", "Serve out your presidency without a single covert operation."],
+	["teflon", "Teflon president", "Survive impeachment hearings."],
+	["pacts", "Arsenal of democracy", "Hold 5 defence pacts at once."],
+	["credible", "A man of his word", "Honour every defence pact that was tested (at least one)."],
+	["famine", "Bread, not bombs", "Cut world hunger by 4 points (population-weighted)."],
+	["survivor", "Still standing", "Survive an assassination attempt."],
+	["for_life", "President for life", "Seize a third term and rule to its end."],
+	["restored", "The republic endures", "Bring tyranny from 40 or more back below 5 and finish your presidency."],
+]
+
+
+func earned_achievements() -> Array:
+	var out: Array = []
+	var served := ending == "retired"
+	var allies := 0
+	var pacts := 0
+	for iso in active_isos():
+		if float(countries[iso]["relation"]) >= 60.0:
+			allies += 1
+		if countries[iso].get("pact", false):
+			pacts += 1
+	var checks := {
+		"two_terms": elections_won >= 1,
+		"a_plus": game_over and grade() in ["A", "A+"],
+		"hard_win": served and difficulty == "hard",
+		"peace": int(us.get("treaties", 0)) >= 6,
+		"mandates": int(stats.get("mandates_done", 0)) >= 5,
+		"allies": allies >= 25,
+		"hegemon": friendly_gdp_share() >= 75.0,
+		"liberator": int(stats.get("invasions_won", 0)) >= 1,
+		"kuwait": flags.has("kuwait_liberated"),
+		"clean": served and int(stats.get("covert", 0)) == 0,
+		"teflon": int(stats.get("impeach_survived", 0)) >= 1,
+		"pacts": int(stats.get("max_pacts", 0)) >= 5 or pacts >= 5,
+		"credible": int(stats.get("pact_tests", 0)) >= 1 and int(stats.get("pact_betrayals", 0)) == 0,
+		"famine": float(baseline.get("hunger", 0.0)) - world_weighted("hunger") >= 4.0,
+		"survivor": int(stats.get("attempts_survived", 0)) >= 1,
+		"for_life": ending == "dictator",
+		"restored": served and float(stats.get("max_tyranny", 0.0)) >= 40.0 and float(us.get("tyranny", 0.0)) < 5.0,
+	}
+	for a in ACHIEVEMENTS:
+		if checks.get(a[0], false):
+			out.append(a)
+	return out
 
 
 func grade() -> String:
 	var pts := legacy_points()
-	for pair in [[95.0, "A+"], [85.0, "A"], [72.0, "B"], [58.0, "C"], [45.0, "D"]]:
+	for pair in [[103.0, "A+"], [92.0, "A"], [78.0, "B"], [62.0, "C"], [48.0, "D"]]:
 		if pts >= pair[0]:
 			return pair[1]
 	return "F"
@@ -258,6 +327,7 @@ func to_dict() -> Dictionary:
 		"us": us, "advisors": advisors, "wars": wars, "messages": messages, "pending": pending,
 		"fired_events": fired_events, "year": year, "month": month, "turn": turn,
 		"agenda": agenda, "difficulty": difficulty, "history": history, "last_election": last_election,
+		"mandates": mandates, "stats": stats, "flags": flags,
 		"elections_enabled": elections_enabled,
 		"next_election_turn": next_election_turn, "end_turn": end_turn,
 		"elections_won": elections_won, "game_over": game_over, "ending": ending,
@@ -284,6 +354,9 @@ static func from_dict(d: Dictionary, map_data: Dictionary) -> GameState:
 	s.difficulty = d.get("difficulty", "normal")
 	s.history = d.get("history", [])
 	s.last_election = d.get("last_election", {})
+	s.mandates = d.get("mandates", [])
+	s.stats = d.get("stats", {})
+	s.flags = d.get("flags", {})
 	s.elections_enabled = d["elections_enabled"]
 	s.next_election_turn = int(d["next_election_turn"])
 	s.end_turn = int(d["end_turn"])

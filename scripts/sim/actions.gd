@@ -27,9 +27,15 @@ const DEFS := {
 		"desc": "Quietly erodes the regime. Exposure risk."},
 	"coup": {"label": "Sponsor coup", "cat": "Covert", "pc": 20, "pool": "covert", "cost": 2.0,
 		"desc": "Install a friendly regime. High exposure risk."},
+	"assassinate": {"label": "Eliminate the leader", "cat": "Covert", "pc": 25, "pool": "covert", "cost": 2.0,
+		"desc": "A CIA operation to kill their head of government. Chaos follows success; exposure brings an international firestorm."},
 	"cyber": {"label": "Cyber operation", "cat": "Covert", "pc": 8, "pool": "covert", "cost": 0.5, "system": "cyber",
 		"desc": "Degrade their military and economy. Exposure risk."},
 	# ---- Ongoing operations: run every month until you stop them or the money runs out.
+	"pact": {"label": "Sign defence pact", "cat": "Diplomacy", "pc": 20, "pool": "", "cost": 0.0,
+		"desc": "A treaty: aggressors think twice before attacking them, rival courtship stops. If they are attacked, you'll be asked to honour it. Senate ratification needed."},
+	"end_pact": {"label": "Tear up defence pact", "cat": "Diplomacy", "pc": 0, "pool": "", "cost": 0.0,
+		"desc": "End the treaty. Relations and your credibility suffer."},
 	"op_influence": {"label": "Charm offensive", "cat": "Diplomacy", "pc": 4, "pool": "", "cost": 0.0, "op": "influence",
 		"desc": "Ongoing. Every month: relations +3, rival influence -6. Upkeep 2 PC a month."},
 	"op_aid": {"label": "Aid programme", "cat": "Economic", "pc": 3, "pool": "aid", "cost": 0.5, "op": "aid",
@@ -43,13 +49,27 @@ const DEFS := {
 	"op_covert": {"label": "Covert campaign", "cat": "Covert", "pc": 6, "pool": "covert", "cost": 0.4, "op": "covert",
 		"desc": "Ongoing. Every month: fund dissidents and sabotage; stability erodes. Small monthly exposure risk."},
 }
-const ORDER := ["envoy", "op_influence", "peace", "aid", "op_aid", "trade", "sanction", "lift_sanction", "arms", "deploy",
-	"withdraw", "op_support", "strike", "op_air", "op_invade", "fund_opposition", "op_covert", "coup", "cyber"]
+const ORDER := ["envoy", "op_influence", "pact", "end_pact", "peace", "aid", "op_aid", "trade", "sanction", "lift_sanction", "arms", "deploy",
+	"withdraw", "op_support", "strike", "op_air", "op_invade", "fund_opposition", "op_covert", "coup", "assassinate", "cyber"]
 const OP_NAMES := {"influence": "Charm offensive", "aid": "Aid programme", "support": "War support", "air": "Air campaign",
 	"invade": "Invasion", "covert": "Covert campaign"}
 ## Monthly running costs: [pc, pool, $bn before cost scale]
 const OP_UPKEEP := {"influence": [2.0, "", 0.0], "aid": [0.0, "aid", 0.5], "support": [2.0, "defense", 0.6],
 	"air": [3.0, "defense", 0.8], "invade": [4.0, "defense", 1.5], "covert": [1.0, "covert", 0.3]}
+
+
+## Political capital an action costs this President (leader archetypes tilt it by category).
+static func pc_of(s: GameState, id: String) -> int:
+	var def: Dictionary = DEFS[id]
+	return int(round(float(def["pc"]) * Personas.mod(s, "pc_" + String(def["cat"]), 1.0)))
+
+
+static func assassinate_chance(s: GameState, iso: String) -> float:
+	var d := s.c(iso)
+	var c := 15.0 + Advisors.intel_accuracy(s) * 0.3 + (50.0 - float(d["stability"])) * 0.2
+	if Simulation._is_bloc_leader(s, iso) or d.get("nuclear", false):
+		c -= 20.0
+	return clampf(c, 3.0, 70.0)
 
 
 static func cost_of(s: GameState, id: String) -> float:
@@ -74,7 +94,8 @@ static func peace_chance(s: GameState, iso: String) -> float:
 	var w := s.war_for(iso)
 	var weariness := minf(float(w.get("months", 0)) * 0.6, 20.0)
 	var standing := (float(s.us.get("standing", 50.0)) - 50.0) * 0.2
-	return clampf(70.0 - amb * 0.6 + rel + weariness + standing, 5.0, 90.0)
+	var cred := (float(s.us.get("credibility", 70.0)) - 60.0) * 0.1
+	return clampf(70.0 - amb * 0.6 + rel + weariness + standing + cred + Personas.mod(s, "peace", 0.0), 5.0, 90.0)
 
 
 static func strike_provoked(s: GameState, iso: String) -> bool:
@@ -84,6 +105,8 @@ static func strike_provoked(s: GameState, iso: String) -> bool:
 
 ## Chance Congress authorises force. Returns -1 when no vote is needed.
 static func war_powers_chance(s: GameState, iso: String, id: String) -> float:
+	if Power.emergency(s):
+		return -1.0
 	if id == "strike" and not strike_provoked(s, iso):
 		return clampf(float(s.us["congress"]) + 10.0 + (float(s.us.get("standing", 50.0)) - 50.0) * 0.3, 5.0, 95.0)
 	if id == "deploy" and s.at_war(iso):
@@ -163,6 +186,18 @@ static func available(s: GameState, iso: String, id: String) -> Dictionary:
 		"op_influence":
 			if rel > 85.0:
 				return _no("Relations are already excellent.")
+		"pact":
+			if d.get("pact", false):
+				return _no("A defence pact is already in force.")
+			if rel < 55.0:
+				return _no("Only close friends sign defence pacts (relations %d, need 55)." % int(rel))
+			if float(s.us.get("credibility", 70.0)) < 30.0:
+				return _no("After broken promises, nobody trusts a US guarantee (credibility %d, need 30)." % int(s.us.get("credibility", 70.0)))
+			if d.get("nuclear", false) and d["bloc"] != "west":
+				return _no("A non-allied nuclear power won't sign.")
+		"end_pact":
+			if not d.get("pact", false):
+				return _no("There is no pact to end.")
 		"op_support":
 			if not s.at_war(iso):
 				return _no("Only for a country that is fighting a war.")
@@ -181,7 +216,10 @@ static func available(s: GameState, iso: String, id: String) -> Dictionary:
 		"coup":
 			if rel > 40.0:
 				return _no("They're already friendly (relations %d)." % int(rel))
-	var pc := float(def["pc"])
+		"assassinate":
+			if rel > -20.0:
+				return _no("Only against hostile regimes (relations %d, must be below -20)." % int(rel))
+	var pc := float(pc_of(s, id))
 	var have_pc := float(s.us["political_capital"])
 	if have_pc < pc:
 		return _no("Needs %d political capital; you have %d. It refills every month, faster with high approval." % [int(pc), int(have_pc)])
@@ -192,12 +230,16 @@ static func available(s: GameState, iso: String, id: String) -> Dictionary:
 	match id:
 		"coup":
 			chance = coup_chance(s, iso)
+		"assassinate":
+			chance = assassinate_chance(s, iso)
 		"peace":
 			chance = peace_chance(s, iso)
 		"trade":
 			chance = clampf(float(s.us["congress"]) + 30.0, 10.0, 95.0)
 		"strike", "deploy", "op_air", "op_invade":
 			chance = war_powers_chance(s, iso, id)
+		"pact":
+			chance = clampf(float(s.us["congress"]) + 25.0, 10.0, 95.0)
 	return {"ok": true, "reason": "", "chance": chance}
 
 
@@ -211,7 +253,7 @@ static func _roll(s: GameState, pct: float) -> bool:
 
 static func _expose(s: GameState, iso: String, pct: float, scandal: float, what: String) -> bool:
 	## Covert exposure check. Better intel lowers the risk.
-	var risk := pct * (1.4 - Advisors.intel_accuracy(s) / 100.0)
+	var risk := pct * (1.4 - Advisors.intel_accuracy(s) / 100.0) * Personas.mod(s, "exposure", 1.0)
 	if _roll(s, risk):
 		s.us["scandal"] = float(s.us["scandal"]) + scandal
 		_standing(s, -10.0)
@@ -228,7 +270,7 @@ static func perform(s: GameState, iso: String, id: String, map_data: Dictionary)
 	var def: Dictionary = DEFS[id]
 	var d := s.c(iso)
 	var name: String = d["name"]
-	s.us["political_capital"] = float(s.us["political_capital"]) - float(def["pc"])
+	s.us["political_capital"] = float(s.us["political_capital"]) - float(pc_of(s, id))
 	if def["pool"] != "":
 		s.us["funds"][def["pool"]] = float(s.us["funds"][def["pool"]]) - cost_of(s, id)
 	Advisors.react(s, id, iso, map_data)
@@ -343,6 +385,36 @@ static func perform(s: GameState, iso: String, id: String, map_data: Dictionary)
 				d["stability"] = clampf(float(d["stability"]) + 5.0, 0.0, 100.0)
 				msg = "Coup attempt in %s fails." % name
 			_expose(s, iso, 30.0 if ok else 65.0, 40.0, "-backed coup")
+		"assassinate":
+			var chance := assassinate_chance(s, iso)
+			var ok := _roll(s, chance)
+			Power.add_tyranny(s, 4.0)
+			if ok:
+				Power.leader_killed(s, iso, true)
+				s.add_log("The leader of %s is killed in a mysterious attack." % name, "headline")
+				msg = "The operation in %s succeeded (%d%% chance). Their leader is dead." % [name, int(chance)]
+			else:
+				_rel(d, -20.0)
+				msg = "The operation in %s failed (%d%% chance). Their leader survived." % [name, int(chance)]
+			if _expose(s, iso, 35.0 if ok else 70.0, 40.0, "assassination plot"):
+				_standing(s, -8.0)
+				s.us["approval"] = float(s.us["approval"]) - 4.0
+		"pact":
+			if _roll(s, clampf(float(s.us["congress"]) + 25.0, 10.0, 95.0)):
+				d["pact"] = true
+				d["rival_pull"] = 0.0
+				_rel(d, 10.0)
+				_standing(s, 2.0)
+				if d["bloc"] == "nonaligned":
+					d["bloc"] = "west"
+				msg = "The Senate ratifies a defence pact with %s." % name
+			else:
+				msg = "The Senate rejects the %s defence pact." % name
+		"end_pact":
+			d["pact"] = false
+			_rel(d, -20.0)
+			s.us["credibility"] = clampf(float(s.us.get("credibility", 70.0)) - 10.0, 0.0, 100.0)
+			msg = "The US withdraws from its defence pact with %s." % name
 		"op_influence", "op_aid", "op_support", "op_air", "op_invade", "op_covert":
 			var type: String = def["op"]
 			if not s.us.has("ops"):
@@ -363,6 +435,8 @@ static func perform(s: GameState, iso: String, id: String, map_data: Dictionary)
 				msg = "Cyber operation degrades %s's command networks." % name
 			else:
 				msg = "Cyber operation against %s attributed to the US." % name
+	if id in ["fund_opposition", "coup", "cyber", "op_covert", "assassinate"]:
+		s.stats["covert"] = int(s.stats.get("covert", 0)) + 1
 	if msg != "":
 		s.add_log(msg, "action")
 		if not def.has("op"):
