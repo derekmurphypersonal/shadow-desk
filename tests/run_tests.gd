@@ -20,6 +20,7 @@ func _init() -> void:
 			_run(meta["id"], seed_value, map_data)
 	_determinism(map_data)
 	_save_roundtrip(map_data)
+	_dark_path(map_data)
 	print("RESULT: %s (%d failures)" % ["PASS" if failures == 0 else "FAIL", failures])
 	quit(1 if failures > 0 else 0)
 
@@ -75,3 +76,42 @@ func _save_roundtrip(map_data: Dictionary) -> void:
 	_play(s, ev, map_data, 10)
 	_play(r, ev, map_data, 10)
 	check(s.turn == r.turn and int(s.us["approval"]) == int(r.us["approval"]), "save/load continues identically")
+
+
+## Personas, power moves, guidance and the third term.
+func _dark_path(map_data: Dictionary) -> void:
+	var events := ScenarioLoader.load_events("classic_1990")
+	var s := ScenarioLoader.new_game("classic_1990", "strongman", true, 77, map_data, "normal", "strongman")
+	check(Power.tyranny(s) >= 10.0, "strongman starts with tyranny")
+	check(Actions.pc_of(s, "op_invade") == 30, "strongman pays full price for military")
+	check(not Guidance.suggest(s, map_data).is_empty(), "guidance has suggestions at start")
+	s.us["political_capital"] = 100.0
+	for id in ["courts", "press", "emergency"]:
+		check(Power.available(s, id)["ok"], "power move available: " + id)
+		Power.perform(s, id)
+	check(Power.tyranny(s) > 40.0, "power moves raise tyranny")
+	check(Actions.war_powers_chance(s, "IRQ", "op_invade") < 0.0, "emergency bypasses Congress")
+	# Jump to the end of the second term and seize a third.
+	s.elections_won = 1
+	s.turn = s.end_turn - 6
+	s.next_election_turn = s.end_turn
+	s.us["political_capital"] = 100.0
+	s.us["tyranny"] = 60.0
+	check(Power.available(s, "third_term")["ok"], "third term available")
+	Power.perform(s, "third_term")
+	check(s.end_turn - s.turn > 40 and not s.elections_enabled, "third term extends rule")
+	var w := ScenarioLoader.new_game("modern_2026", "peacemaker", true, 5, map_data, "normal", "warlord")
+	check(Actions.pc_of(w, "op_invade") == 21, "warlord invades cheaper")
+	var target := ""
+	for iso in w.active_isos():
+		if float(w.c(iso)["relation"]) < -40.0:
+			target = iso
+			break
+	if target != "":
+		w.us["political_capital"] = 100.0
+		w.us["funds"]["covert"] = 20.0
+		check(Actions.available(w, target, "assassinate")["ok"], "assassination available vs hostile regime")
+		Actions.perform(w, target, "assassinate", map_data)
+	var d := s.to_dict()
+	var back := GameState.from_dict(JSON.parse_string(JSON.stringify(d)), map_data)
+	check(back.us.get("persona", "") == "strongman" and back.us.get("third_term", false), "persona and third term survive save/load")

@@ -1,7 +1,7 @@
 extends SceneTree
 ## Strategy-bot playtests for balancing: godot --headless --path . -s tests/balance.gd -- [seeds] [difficulty]
 
-const BOTS := ["passive", "diplomat", "hawk", "balanced", "interventionist"]
+const BOTS := ["passive", "diplomat", "hawk", "balanced", "interventionist", "guided", "strongman"]
 
 
 func _init() -> void:
@@ -18,7 +18,8 @@ func _init() -> void:
 			var grade := 0.0
 			var months := 0.0
 			for sd in seeds:
-				var s := ScenarioLoader.new_game(scen, "peacemaker" if bot != "hawk" else "hegemon", true, 1000 + sd, map_data, diff)
+				var agenda: String = {"hawk": "hegemon", "strongman": "strongman"}.get(bot, "peacemaker")
+				var s := ScenarioLoader.new_game(scen, agenda, true, 1000 + sd, map_data, diff, "strongman" if bot == "strongman" else "statesman")
 				Events.check(s, events, map_data)
 				while not s.game_over and s.turn < 200:
 					while not s.pending.is_empty():
@@ -30,7 +31,7 @@ func _init() -> void:
 				appr += float(s.us["approval"])
 				grade += s.legacy_points()
 				months += s.turn
-			print("%-13s %-9s endings=%s  score=%.0f  approval=%.0f  legacy=%.0f  months=%.0f" % [scen, bot, str(endings), score / seeds, appr / seeds, grade / seeds, months / seeds])
+			print("%-13s %-15s endings=%s  score=%.0f  approval=%.0f  legacy=%.0f  months=%.0f" % [scen, bot, str(endings), score / seeds, appr / seeds, grade / seeds, months / seeds])
 	quit()
 
 
@@ -39,6 +40,10 @@ func _choose(s: GameState, bot: String) -> int:
 	var choices: Array = card["choices"]
 	if bot == "passive":
 		return choices.size() - 1
+	if bot == "strongman" and String(card["id"]) == "power_generals":
+		return 1
+	if bot == "strongman" and String(card["id"]) == "power_protests":
+		return 2
 	var best := 0
 	var best_v := -1e9
 	for i in choices.size():
@@ -71,6 +76,17 @@ func _act(s: GameState, bot: String, map_data: Dictionary) -> void:
 	# Budget: balanced and diplomat nudge domestic spending up modestly.
 	if bot in ["balanced", "diplomat"] and s.turn == 0:
 		s.us["budget"]["domestic"] = float(s.us["budget_baseline"]["domestic"]) * 1.08
+	if bot == "guided":
+		_guided(s, map_data)
+		return
+	if bot == "strongman":
+		for id in ["courts", "press", "purge", "crackdown", "rig", "emergency", "third_term"]:
+			if id != "third_term" and Power.tyranny(s) > 55.0:
+				continue
+			if Power.available(s, id)["ok"] and float(s.us["political_capital"]) > 35.0:
+				Power.perform(s, id)
+				break
+		bot = "balanced"
 	var acted := 0
 	for iso in isos:
 		if acted >= 3:
@@ -111,3 +127,24 @@ func _act(s: GameState, bot: String, map_data: Dictionary) -> void:
 					acted += 1
 				elif float(d["hunger"]) > 60.0 and _try(s, iso, "aid", map_data):
 					acted += 1
+
+
+## Follow the Next Steps panel: the top suggestion that can be acted on, up to three a month.
+func _guided(s: GameState, map_data: Dictionary) -> void:
+	var done := 0
+	for it in Guidance.suggest(s, map_data, 6):
+		if done >= 3:
+			break
+		var iso := String(it["iso"])
+		var act := String(it["action"])
+		if iso != "" and act != "" and _try(s, iso, act, map_data):
+			done += 1
+		elif iso != "" and act in ["op_influence", "op_aid"] and _try(s, iso, "envoy" if act == "op_influence" else "aid", map_data):
+			done += 1
+		elif String(it["tab"]) == "budget":
+			var b: Dictionary = s.us["budget"]
+			var base: Dictionary = s.us["budget_baseline"]
+			if Simulation.budget_deficit_pct(s) > 5.5:
+				b["defense"] = maxf(float(base["defense"]) * 0.85, float(b["defense"]) * 0.97)
+			elif float(s.us["approval"]) < 50.0:
+				b["domestic"] = minf(float(base["domestic"]) * 1.12, float(b["domestic"]) * 1.03)
