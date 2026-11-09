@@ -81,9 +81,29 @@ static func suggest(s: GameState, map_data: Dictionary, limit: int = 5) -> Array
 	if int(u.get("protests", 0)) > 0:
 		out.append(_i(62, "scandal", "Protests in the streets", "They cost approval every month. Give ground or crack down from the Oval Office.", "", "oval"))
 
-	# ---- Unused capital ----
-	if pc >= 70.0 and out.size() < 3:
-		out.append(_i(30, "pc", "Spend your political capital", "You have %d PC and it caps at 100. Send envoys to wavering friends or start a charm offensive." % int(pc)))
+	# ---- Unused capital: concrete things worth buying with it ----
+	if pc >= 45.0:
+		var trade := ""
+		var pact := ""
+		var near := ""
+		var near_gap := 999.0
+		for iso in s.active_isos():
+			var d := s.c(iso)
+			var r := float(d["relation"])
+			if r >= 20.0 and not d.get("trade_deal", false) and not d.get("sanctioned", false) and (trade == "" or float(d["gdp"]) > float(s.c(trade)["gdp"])):
+				trade = iso
+			if r >= 55.0 and not d.get("pact", false) and not d.get("nuclear", false) and float(d["military"]) < 45.0 and (pact == "" or float(d["gdp"]) > float(s.c(pact)["gdp"])):
+				pact = iso
+			for th in [20.0, 55.0]:
+				if r < th and th - r <= 12.0 and th - r < near_gap and float(d["gdp"]) > 20.0:
+					near_gap = th - r
+					near = iso
+		if trade != "" and pc >= 50.0:
+			out.append(_i(36, "economic", "Trade deal with %s" % s.c(trade)["name"], "You have %d political capital. A deal lifts both economies and locks out rivals; Congress votes on it." % int(pc), trade, "", "trade"))
+		if pact != "" and pc >= 60.0 and float(u.get("credibility", 70.0)) >= 30.0:
+			out.append(_i(34, "military", "Defence pact with %s" % s.c(pact)["name"], "A close friend with a weak army. A pact deters attack and stops rival courtship.", pact, "", "pact"))
+		if near != "":
+			out.append(_i(32, "diplomacy", "Envoy to %s" % s.c(near)["name"], "Relations are %d: %d short of %s." % [int(s.c(near)["relation"]), int(ceil(near_gap)), "a trade deal" if float(s.c(near)["relation"]) < 20.0 else "a defence pact"], near, "", "envoy"))
 
 	out.sort_custom(func(a, b): return int(a["pri"]) > int(b["pri"]))
 	var seen := {}
@@ -95,6 +115,22 @@ static func suggest(s: GameState, map_data: Dictionary, limit: int = 5) -> Array
 		seen[k] = true
 		final.append(it)
 	return final.slice(0, limit)
+
+
+## The same advice as map pins: only items tied to a country, one per country, most urgent first.
+## Each pin: {iso, text, icon, action, tone}. Running operations are pinned too, so the map shows your work.
+static func pins(s: GameState, map_data: Dictionary, limit: int = 6) -> Array:
+	var out: Array = []
+	var seen := {}
+	for it in suggest(s, map_data, 12):
+		var iso := String(it["iso"])
+		if iso == "" or seen.has(iso):
+			continue
+		seen[iso] = true
+		var title := String(it["title"])
+		var tone := "accent" if title.begins_with("Mandate") else ("bad" if it["icon"] == "war" else "warn")
+		out.append({"iso": iso, "text": title.replace("Mandate: ", "★ "), "icon": it["icon"], "action": it["action"], "tone": tone, "tip": it["text"]})
+	return out.slice(0, limit)
 
 
 static func _i(pri: int, icon: String, title: String, text: String, iso: String = "", tab: String = "", action: String = "") -> Dictionary:

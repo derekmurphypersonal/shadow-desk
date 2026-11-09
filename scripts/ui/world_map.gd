@@ -5,6 +5,8 @@ extends Control
 
 signal country_clicked(iso: String)
 signal country_hovered(iso: String)
+signal country_picked(iso: String, at: Vector2)     # a click on a country, with the screen position
+signal pin_clicked(pin: Dictionary)
 
 const MODES := ["relation", "stability", "hunger", "freedom", "military", "bloc"]
 const MODE_LABELS := {"relation": "Relations with US", "stability": "Stability", "hunger": "Hunger",
@@ -37,6 +39,10 @@ var _redraw_acc := 0.0
 var _centroids: Dictionary = {}
 var _fx: Array = []
 var _ocean: Texture2D
+var _pins: Array = []            # Guidance.pins, refreshed when the state changes
+var _pin_rects: Array = []       # [Rect2, pin] for clicks, rebuilt every draw
+var show_pins := true
+var wheel_open: Callable            # set by Main: pins step back while the action wheel is up
 
 const FX_COLORS := {"hostile": Color(1.0, 0.45, 0.3), "friendly": Color(0.45, 0.75, 1.0), "aid": Color(0.45, 0.9, 0.55),
 	"covert": Color(0.75, 0.6, 1.0), "gold": Color(1.0, 0.8, 0.35), "grey": Color(0.7, 0.72, 0.78)}
@@ -60,7 +66,15 @@ func _on_state() -> void:
 			if Settings.get_value("fx"):
 				_fx.append({"iso": f["iso"], "kind": f["kind"], "text": f.get("text", ""), "t0": _time + 0.12 * float(_fx.size() % 4)})
 		Game.state.fx.clear()
+		_pins = Guidance.pins(Game.state, Game.map_data) if show_pins else []
 	queue_redraw()
+
+
+## Play an effect on a country now: an arc from Washington, a burst, and a floating label.
+func add_fx(iso: String, kind: String, text: String, delay: float = 0.0) -> void:
+	if Settings.get_value("fx") and iso != "":
+		_fx.append({"iso": iso, "kind": kind, "text": text, "t0": _time + delay})
+		queue_redraw()
 
 
 static func fx_style(kind: String) -> String:
@@ -77,6 +91,8 @@ static func fx_style(kind: String) -> String:
 			return "victory"
 		"halt":
 			return "halt"
+	if kind.begins_with("note"):
+		return "note"
 	return "friendly"
 
 
@@ -211,10 +227,17 @@ func _gui_input(event: InputEvent) -> void:
 			else:
 				_dragging = false
 				if _drag_moved < 6.0:
+					for pr in _pin_rects:
+						if (pr[0] as Rect2).has_point(mb.position):
+							Audio.sfx("click", -4.0)
+							pin_clicked.emit(pr[1])
+							accept_event()
+							return
 					var iso := pick(mb.position)
 					if iso != "":
 						Audio.sfx("click", -4.0)
 					country_clicked.emit(iso)
+					country_picked.emit(iso, mb.position)
 		accept_event()
 	elif event is InputEventMouseMotion:
 		var mm := event as InputEventMouseMotion
@@ -385,6 +408,7 @@ func _draw() -> void:
 	_draw_overlays(s)
 	if not attract:
 		_draw_op_badges(s)
+		_draw_pins(s)
 		_draw_fx()
 	# Vignette edges.
 	var v := Color(0, 0, 0, 0.35)
@@ -557,6 +581,48 @@ func _draw_tooltip(s: GameState) -> void:
 		draw_string(font, pos + Vector2(10, 18 + 15 * i), lines[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 11, UITheme.MUTED if i > 1 else UITheme.ACCENT)
 
 
+## Pins: anything that wants the President's attention, on the country it concerns.
+func _draw_pins(s: GameState) -> void:
+	_pin_rects.clear()
+	if _pins.is_empty():
+		return
+	var font := UITheme.font_bold()
+	var placed: Array = []
+	for pin in _pins:
+		var iso := String(pin["iso"])
+		if not s.is_active(iso):
+			continue
+		var anchor := centroid_of(iso)
+		if anchor.x < -40.0 or anchor.y < -40.0 or anchor.x > size.x + 40.0 or anchor.y > size.y + 40.0:
+			continue
+		var text := String(pin["text"])
+		var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x + 16.0
+		var r := Rect2(anchor + Vector2(-w * 0.5, -44.0), Vector2(w, 20.0))
+		r.position.x = clampf(r.position.x, 6.0, maxf(6.0, size.x - w - 6.0))
+		var tries := 0
+		while tries < 6:
+			var hit := false
+			for o in placed:
+				if (o as Rect2).grow(3.0).intersects(r):
+					hit = true
+			if not hit:
+				break
+			r.position.y -= 23.0
+			tries += 1
+		placed.append(r)
+		var col: Color = UITheme.tone(String(pin["tone"]))
+		if wheel_open.is_valid() and wheel_open.call():
+			if iso == Game.selected:
+				continue
+			col = Color(col, 0.45)
+		var hot := r.has_point(_mouse)
+		draw_line(anchor + Vector2(0, -8), Vector2(clampf(anchor.x, r.position.x + 6.0, r.end.x - 6.0), r.end.y), Color(col, 0.8), 1.5, true)
+		draw_circle(anchor + Vector2(0, -8), 2.5, col)
+		draw_style_box(UITheme.box(Color(0.03, 0.05, 0.09, 0.96) if not hot else Color(0.03, 0.05, 0.09).lerp(col, 0.25), col, 10, 0), r)
+		draw_string(font, r.position + Vector2(8, 14), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, col.lightened(0.25))
+		_pin_rects.append([r, pin])
+
+
 func _draw_op_badges(s: GameState) -> void:
 	var counts := {}
 	for op in s.us.get("ops", []):
@@ -607,6 +673,10 @@ func _draw_fx() -> void:
 			col = FX_COLORS["gold"]
 		elif style == "halt":
 			col = FX_COLORS["grey"]
+		elif style == "note":
+			col = UITheme.tone(String(f["kind"]).trim_prefix("note_")) if String(f["kind"]).contains("_") else FX_COLORS["gold"]
+			if col == UITheme.MUTED:
+				col = FX_COLORS["grey"]
 		var travel := 0.65
 		if style in ["hostile", "friendly", "aid"] and home != Vector2.ZERO:
 			var tt := clampf(age / travel, 0.0, 1.0)

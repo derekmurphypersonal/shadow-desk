@@ -36,6 +36,8 @@ static func tick(s: GameState, map_data: Dictionary, events: Array) -> void:
 		return
 	Events.check(s, events, map_data)
 	Events.un_resolution(s)
+	s.us["quiet"] = 0 if not s.pending.is_empty() else int(s.us.get("quiet", 0)) + 1
+	Diary.roll(s, map_data)
 	if int(s.stats.get("term_rolled", 0)) != int(s.stats.get("term", 0)) and not s.game_over:
 		Mandates.roll(s, map_data)
 		s.stats["term_rolled"] = int(s.stats.get("term", 0))
@@ -136,10 +138,10 @@ static func _country(s: GameState, iso: String) -> void:
 
 	if not cw and float(d["stability"]) < 12.0 and s.rng.randf() < 0.1:
 		d["civil_war"] = true
-		s.add_log("Civil war breaks out in %s." % d["name"], "headline")
+		s.add_log("Civil war breaks out in %s." % d["name"], "headline", iso)
 	elif cw and float(d["stability"]) > 45.0:
 		d["civil_war"] = false
-		s.add_log("The civil war in %s winds down." % d["name"], "headline")
+		s.add_log("The civil war in %s winds down." % d["name"], "headline", iso)
 	if float(d["stability"]) < 15.0 and s.rng.randf() < (0.02 if cw else 0.06):
 		regime_change(s, iso, false)
 
@@ -157,10 +159,10 @@ static func _bloc_shift(s: GameState, iso: String) -> void:
 		return
 	if float(d["relation"]) > 65.0 and d["bloc"] != "west":
 		d["bloc"] = "west"
-		s.add_log("%s moves into the Western camp." % d["name"], "headline")
+		s.add_log("%s moves into the Western camp." % d["name"], "headline", iso)
 	elif float(d["relation"]) < -45.0 and d["bloc"] == "west":
 		d["bloc"] = "nonaligned"
-		s.add_log("%s breaks with the West." % d["name"], "headline")
+		s.add_log("%s breaks with the West." % d["name"], "headline", iso)
 
 
 static func regime_change(s: GameState, iso: String, us_backed: bool) -> void:
@@ -177,16 +179,16 @@ static func regime_change(s: GameState, iso: String, us_backed: bool) -> void:
 		if not _is_bloc_leader(s, iso):
 			d["bloc"] = "west"
 		d["us_backed"] = true
-		s.add_log("New US-friendly government in %s." % d["name"], "headline")
+		s.add_log("New US-friendly government in %s." % d["name"], "headline", iso)
 	else:
 		d["stability"] = 30.0
 		d["relation"] = s.rng.randf_range(-40.0, 20.0)
 		d["freedom"] = clamp100(float(d["freedom"]) + s.rng.randf_range(-20.0, 15.0))
 		d["us_backed"] = false
 		if was_cw:
-			s.add_log("A rival faction seizes the capital of %s." % d["name"], "headline")
+			s.add_log("A rival faction seizes the capital of %s." % d["name"], "headline", iso)
 		else:
-			s.add_log("Coup in %s: the military seizes power." % d["name"], "headline")
+			s.add_log("Coup in %s: the military seizes power." % d["name"], "headline", iso)
 
 
 static func _strength(s: GameState, iso: String) -> float:
@@ -281,7 +283,7 @@ static func _ops(s: GameState) -> void:
 		if float(s.us["political_capital"]) < pc or (pool != "" and float(s.us["funds"][pool]) < cost):
 			s.us["ops"].erase(op)
 			var why := "political capital" if float(s.us["political_capital"]) < pc else "%s funds" % pool
-			s.add_log("%s in %s halted: out of %s." % [nm, d["name"], why], "cabinet")
+			s.add_log("%s in %s halted: out of %s." % [nm, d["name"], why], "cabinet", iso)
 			s.fx.append({"iso": iso, "kind": "halt", "text": "%s halted" % nm})
 			if type == "invade":
 				s.us["approval"] = float(s.us["approval"]) - 4.0
@@ -294,6 +296,7 @@ static func _ops(s: GameState) -> void:
 			"influence":
 				d["relation"] = clampf(float(d["relation"]) + 3.0 * (1.0 - float(d["ambition"]) / 200.0), -100.0, 100.0)
 				d["rival_pull"] = maxf(0.0, float(d.get("rival_pull", 0.0)) - 6.0)
+				s.add_log("Charm offensive in %s: relations now %+d." % [d["name"], int(d["relation"])], "op", iso)
 			"aid":
 				var impact := cost / maxf(float(d["gdp"]), 0.1) * 100.0
 				var eff := 0.5 if float(d["freedom"]) < 30.0 else 1.0
@@ -301,6 +304,7 @@ static func _ops(s: GameState) -> void:
 				d["aid_boost"] = float(d["aid_boost"]) + minf(5.0, impact * 1.5) * eff
 				d["relation"] = clampf(float(d["relation"]) + 1.5 + minf(3.0, impact * 0.5), -100.0, 100.0)
 				s.us["standing"] = clamp100(float(s.us.get("standing", 50.0)) + 0.3)
+				s.add_log("Aid programme in %s: hunger down to %d." % [d["name"], int(d["hunger"])], "op", iso)
 			"support":
 				if not s.at_war(iso):
 					s.us["ops"].erase(op)
@@ -308,6 +312,7 @@ static func _ops(s: GameState) -> void:
 					continue
 				d["relation"] = clampf(float(d["relation"]) + 1.5, -100.0, 100.0)
 				d["military"] = clamp100(float(d["military"]) + 0.8)
+				s.add_log("US arms and intelligence reach %s." % d["name"], "op", iso)
 			"air":
 				var provoked := Actions.strike_provoked(s, iso)
 				d["military"] = clamp100(float(d["military"]) - 4.0)
@@ -322,6 +327,7 @@ static func _ops(s: GameState) -> void:
 					s.us["standing"] = clamp100(float(s.us.get("standing", 50.0)) - 2.0)
 				s.us["mood"] = float(s.us["mood"]) - 0.2
 				s.fx.append({"iso": iso, "kind": "strike", "text": ""})
+				s.add_log("Air campaign over %s: their military down to %d." % [d["name"], int(d["military"])], "op", iso)
 				if d.get("nuclear", false) and s.rng.randf() < 0.01:
 					trigger_ending(s, "nuclear", "%s answered the air campaign with a nuclear weapon." % d["name"])
 					return
@@ -332,6 +338,8 @@ static func _ops(s: GameState) -> void:
 				d["stability"] = clamp100(float(d["stability"]) - 4.0)
 				s.us["mood"] = float(s.us["mood"]) - (0.6 if int(op["months"]) <= 12 else 1.2) * Personas.mod(s, "war_mood", 1.0)
 				s.fx.append({"iso": iso, "kind": "strike", "text": ""})
+				if float(op["progress"]) < 100.0:
+					s.add_log("Invasion of %s: %d%% of the way to the capital." % [d["name"], int(op["progress"])], "op", iso)
 				if float(op["progress"]) >= 100.0:
 					s.us["ops"].erase(op)
 					var w2 := s.war_for(iso)
@@ -340,12 +348,13 @@ static func _ops(s: GameState) -> void:
 					regime_change(s, iso, true)
 					d["stability"] = 25.0
 					s.us["approval"] = float(s.us["approval"]) + (6.0 if int(op["months"]) <= 8 else 2.0)
-					s.add_log("VICTORY: US forces take the capital of %s after %d months." % [d["name"], int(op["months"])], "headline")
+					s.add_log("VICTORY: US forces take the capital of %s after %d months." % [d["name"], int(op["months"])], "headline", iso)
 					s.stats["invasions_won"] = int(s.stats.get("invasions_won", 0)) + 1
 					s.fx.append({"iso": iso, "kind": "victory", "text": "Victory"})
 			"covert":
 				d["stability"] = clamp100(float(d["stability"]) - 3.0)
 				d["covert_pressure"] = float(d["covert_pressure"]) + 6.0
+				s.add_log("Covert campaign in %s: stability down to %d." % [d["name"], int(d["stability"])], "op", iso)
 				if Actions._expose(s, iso, 6.0, 10.0, "covert campaign"):
 					s.us["ops"].erase(op)
 
@@ -387,13 +396,13 @@ static func _rivals(s: GameState, map_data: Dictionary) -> void:
 		if float(td["hunger"]) > 40.0:
 			td["hunger"] = clamp100(float(td["hunger"]) - 2.0)
 		if before < 20.0 and float(td["rival_pull"]) >= 20.0:
-			s.add_log("%s is courting %s with loans and arms." % [ld["name"], td["name"]], "headline")
+			s.add_log("%s is courting %s with loans and arms." % [ld["name"], td["name"]], "headline", target)
 		if float(td["rival_pull"]) >= 40.0 and float(td["relation"]) < 10.0:
 			td["bloc"] = bloc_id
 			td["rival_pull"] = 0.0
 			bloc["focus"] = ""
 			td["relation"] = clampf(float(td["relation"]) - 10.0, -100.0, 100.0)
-			s.add_log("%s signs a strategic partnership with %s." % [td["name"], ld["name"]], "headline")
+			s.add_log("%s signs a strategic partnership with %s." % [td["name"], ld["name"]], "headline", target)
 
 
 static func _courtable(s: GameState, iso: String, bloc_id: String) -> bool:
@@ -409,7 +418,7 @@ static func start_war(s: GameState, a: String, b: String, progress: float) -> vo
 	if not s.is_active(a) or not s.is_active(b) or s.at_war(a) or s.at_war(b):
 		return
 	s.wars.append({"a": a, "b": b, "progress": progress, "months": 0})
-	s.add_log("WAR: %s invades %s." % [s.c(a)["name"], s.c(b)["name"]], "war")
+	s.add_log("WAR: %s invades %s." % [s.c(a)["name"], s.c(b)["name"]], "war", b)
 	if s.c(b).get("pact", false):
 		pact_test(s, a, b)
 
@@ -431,7 +440,7 @@ static func pact_test(s: GameState, a: String, b: String) -> void:
 
 static func end_war(s: GameState, w: Dictionary, text: String) -> void:
 	s.wars.erase(w)
-	s.add_log(text, "headline")
+	s.add_log(text, "headline", String(w["b"]))
 
 
 static func budget_deficit_pct(s: GameState) -> float:
@@ -478,8 +487,7 @@ static func _us_politics(s: GameState) -> void:
 	u["approval"] = clamp100(appr)
 	u["mood"] = float(u["mood"]) * 0.9
 	u["congress"] = clamp100(float(u["congress"]) + (appr - float(u["congress"])) * 0.05)
-	var regen := (5.0 + (appr - 50.0) * 0.08 + (float(u["congress"]) - 50.0) * 0.04) * s.diff("pc") * Personas.mod(s, "pc", 1.0)
-	u["political_capital"] = clamp100(float(u["political_capital"]) + regen)
+	u["political_capital"] = clamp100(float(u["political_capital"]) + pc_regen(s))
 	var stand_target := 55.0 + Personas.mod(s, "standing_drift", 0.0) - Power.tyranny(s) * 0.3
 	u["standing"] = clamp100(float(u.get("standing", 50.0)) + (stand_target - float(u.get("standing", 50.0))) * 0.02)
 	u["credibility"] = clamp100(float(u.get("credibility", 70.0)) + (60.0 - float(u.get("credibility", 70.0))) * 0.01)
@@ -487,6 +495,15 @@ static func _us_politics(s: GameState) -> void:
 	u["gdp"] = float(u["gdp"]) * (1.0 + 2.2 / 1200.0)
 	if s.wars.is_empty():
 		u["peace_months"] = int(u["peace_months"]) + 1
+
+
+## Political capital gained this month. Refills faster when the tank is low and slows as it fills,
+## so a broke President can still act and a hoarder gains little by waiting.
+static func pc_regen(s: GameState) -> float:
+	var u: Dictionary = s.us
+	var base := 6.0 + (float(u["approval"]) - 50.0) * 0.08 + (float(u["congress"]) - 50.0) * 0.04
+	var tank := clampf(1.5 - float(u["political_capital"]) / 80.0, 0.5, 1.5)
+	return maxf(1.0, base * tank) * s.diff("pc") * Personas.mod(s, "pc", 1.0)
 
 
 static func _endings(s: GameState) -> void:

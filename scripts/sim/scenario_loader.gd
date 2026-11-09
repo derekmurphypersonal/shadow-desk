@@ -103,4 +103,5 @@ static func new_game(scenario_id: String, agenda: String, elections: bool, seed_
 	s.add_log("You take office. %s." % s.scenario.get("name", ""), "headline")
 	Mandates.roll(s, map_data)
 	s.stats["term_rolled"] = 0
+	Diary.roll(s, map_data)
 	return s

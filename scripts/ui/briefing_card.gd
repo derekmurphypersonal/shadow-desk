@@ -12,6 +12,10 @@ var _paper: PanelContainer
 var _locked := false
 var _seat := "nsa"
 var _person := ""
+var _choices: VBoxContainer
+var _result: VBoxContainer
+var _picked := -1
+var _done := false
 
 
 func setup(c: Dictionary) -> BriefingCard:
@@ -69,7 +73,7 @@ func _ready() -> void:
 		frame.add_theme_stylebox_override("panel", UITheme.shadow_box(Color(0.99, 0.98, 0.95), Color(0.8, 0.76, 0.68), 2, 6))
 		var art := TextureRect.new()
 		art.texture = art_tex
-		art.custom_minimum_size = Vector2(632, 118)
+		art.custom_minimum_size = Vector2(632, 100)
 		art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 		frame.add_child(art)
@@ -101,6 +105,13 @@ func _ready() -> void:
 	v.add_child(_rule())
 	v.add_child(_type("YOUR DECISION", 12, true, Color(0.38, 0.35, 0.31)))
 
+	_choices = VBoxContainer.new()
+	_choices.add_theme_constant_override("separation", 6)
+	v.add_child(_choices)
+	_result = VBoxContainer.new()
+	_result.add_theme_constant_override("separation", 8)
+	_result.visible = false
+	v.add_child(_result)
 	var choices: Array = card.get("choices", [])
 	for i in choices.size():
 		var ch: Dictionary = choices[i]
@@ -119,11 +130,22 @@ func _ready() -> void:
 		b.focus_mode = Control.FOCUS_NONE
 		b.mouse_entered.connect(func(): Audio.sfx("hover", -14.0))
 		b.pressed.connect(_on_choice.bind(i, b))
-		v.add_child(b)
-		var hint := _stance_line(s, ch)
+		_choices.add_child(b)
+		# What it costs and what it is likely to change, then who is for and against.
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+		var pad := Control.new()
+		pad.custom_minimum_size.x = 14
+		row.add_child(pad)
+		var chips := UITheme.chip_row(Report.preview(s, ch, String(card.get("ctx", ""))), true, 11)
+		chips.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var hint := _stance_line(s, ch).strip_edges()
 		if hint != "":
-			var hl := _type(hint, 12, false, Color(0.42, 0.39, 0.35))
-			v.add_child(hl)
+			var hl := _type("  " + hint, 12, false, Color(0.42, 0.39, 0.35))
+			hl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			chips.add_child(hl)
+		row.add_child(chips)
+		_choices.add_child(row)
 
 	var foot := HBoxContainer.new()
 	if s.pending.size() > 1:
@@ -188,9 +210,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		var k := (event as InputEventKey).keycode
 		if k >= KEY_1 and k <= KEY_4:
 			var idx := k - KEY_1
-			if idx < card.get("choices", []).size():
+			if idx < card.get("choices", []).size() and not _locked:
 				get_viewport().set_input_as_handled()
 				_on_choice(idx, null)
+		elif (k == KEY_ENTER or k == KEY_KP_ENTER or k == KEY_SPACE) and _done:
+			get_viewport().set_input_as_handled()
+			chosen.emit(_picked)
 		elif k == KEY_SPACE:
 			_finish_reveal()
 			get_viewport().set_input_as_handled()
@@ -226,8 +251,58 @@ func _on_choice(i: int, b: Button) -> void:
 	var tw := create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tw.tween_property(stamp, "scale", Vector2.ONE, 0.18)
 	tw.tween_property(stamp, "modulate:a", 1.0, 0.1)
-	tw.chain().tween_interval(0.22)
-	tw.chain().tween_callback(func(): chosen.emit(i))
+	tw.chain().tween_interval(0.3)
+	tw.chain().tween_callback(func():
+		stamp.queue_free()
+		_show_result(i))
+
+
+## Apply the decision and show what it changed before the card closes.
+func _show_result(i: int) -> void:
+	var s := Game.state
+	var ctx := String(card.get("ctx", ""))
+	var label := String(card["choices"][i]["label"])
+	var before := Report.snapshot(s, ctx)
+	Game.choose(i)
+	var chips := Report.diff(s, before, Report.snapshot(s, ctx))
+	_picked = i
+	_choices.visible = false
+	var box := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(UITheme.STAMP, 0.05)
+	sb.border_color = Color(UITheme.STAMP, 0.85)
+	sb.set_border_width_all(3)
+	sb.set_corner_radius_all(4)
+	sb.set_content_margin_all(12)
+	box.add_theme_stylebox_override("panel", sb)
+	var bv := VBoxContainer.new()
+	bv.add_theme_constant_override("separation", 8)
+	box.add_child(bv)
+	var head := UITheme.wrap(_type("DECIDED · " + label, 17, true, UITheme.STAMP))
+	bv.add_child(head)
+	if chips.is_empty():
+		bv.add_child(_type("Nothing moves yet. The consequences will take time.", 13, false, Color(0.38, 0.35, 0.31)))
+	else:
+		bv.add_child(UITheme.chip_row(chips, true, 12))
+	_result.add_child(box)
+	var go := Button.new()
+	go.text = "Continue  ⏎"
+	go.focus_mode = Control.FOCUS_NONE
+	go.add_theme_font_override("font", UITheme.font_type_bold())
+	go.add_theme_font_size_override("font_size", 15)
+	go.add_theme_color_override("font_color", UITheme.INK)
+	go.add_theme_color_override("font_hover_color", Color(0, 0, 0))
+	go.add_theme_stylebox_override("normal", UITheme.box(Color(0.9, 0.86, 0.77), Color(0.6, 0.55, 0.47), 4, 10))
+	go.add_theme_stylebox_override("hover", UITheme.box(Color(0.98, 0.93, 0.8), UITheme.ACCENT.darkened(0.15), 4, 10))
+	go.add_theme_stylebox_override("pressed", UITheme.box(Color(0.85, 0.78, 0.62), UITheme.STAMP, 4, 10))
+	go.size_flags_horizontal = Control.SIZE_SHRINK_END
+	go.custom_minimum_size.x = 170
+	go.pressed.connect(func(): chosen.emit(_picked))
+	_result.add_child(go)
+	_result.visible = true
+	_result.modulate.a = 0.0
+	create_tween().tween_property(_result, "modulate:a", 1.0, 0.2)
+	_done = true
 
 
 func _stance_line(s: GameState, ch: Dictionary) -> String:

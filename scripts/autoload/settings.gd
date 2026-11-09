@@ -7,7 +7,7 @@ const PATH := "user://settings.cfg"
 const DEFAULTS := {
 	"music_volume": 0.6, "sfx_volume": 0.8, "voice_enabled": true, "voice_volume": 0.9, "voice_rate": 1.0,
 	"fullscreen": false, "ui_scale": 1.0, "colorblind": false, "show_digest": true, "typewriter": true,
-	"tutorial_done": false, "edge_pan": false, "cabinet_minor": true, "digest_big_only": true, "fx": true,
+	"tutorial_done": false, "edge_pan": false, "cabinet_minor": true, "digest_big_only": true, "fx": true, "month_sweep": true,
 }
 
 var values: Dictionary = DEFAULTS.duplicate()

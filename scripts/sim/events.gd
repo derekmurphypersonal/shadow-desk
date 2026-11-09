@@ -10,17 +10,28 @@ const COUNTRY_RANGES := {
 const TEMPLATE_COOLDOWN := 6
 
 
+const MAX_CARDS := 2          # template events stop adding briefing cards beyond this many a month
+
+
 static func check(s: GameState, events: Array, map_data: Dictionary) -> void:
+	if s.turn == 0 and not s.fired_events.has("opening"):
+		_opening(s)
 	var templates_fired := 0
+	# Pacing: the longer the desk has been empty, the likelier something lands on it.
+	var drought := int(s.us.get("quiet", 0))
+	var boost := 1.0 + 0.6 * float(drought)
 	for ev in events:
 		if ev.has("system") and not s.has_system(ev["system"]):
 			continue
 		if ev.get("template", false):
 			if templates_fired >= 2:
 				continue
+			var is_card: bool = not (ev.get("minor", false) and s.auto_minor)
+			if is_card and s.pending.size() >= MAX_CARDS:
+				continue
 			if s.fired_events.has(ev["id"]) and s.turn - int(s.fired_events[ev["id"]]) < TEMPLATE_COOLDOWN:
 				continue
-			if s.rng.randf() >= float(ev.get("chance", 0.1)):
+			if s.rng.randf() >= float(ev.get("chance", 0.1)) * (boost if is_card else 1.0):
 				continue
 			var candidates: Array = []
 			for iso in s.active_isos():
@@ -51,6 +62,60 @@ static func check(s: GameState, events: Array, map_data: Dictionary) -> void:
 		if when.has("chance") and s.rng.randf() >= float(when["chance"]):
 			continue
 		fire(s, ev, "", map_data)
+	if s.pending.is_empty() and s.turn > 0:
+		_break_drought(s, events, map_data, drought >= 1)
+
+
+## Nothing on the desk this month: usually bring an eligible event forward as a real briefing,
+## and always do so if last month was empty too. Keeps quiet months rare and never back to back.
+static func _break_drought(s: GameState, events: Array, map_data: Dictionary, force: bool) -> void:
+	if not force and s.rng.randf() > 0.8:
+		return
+	var options: Array = []
+	for ev in events:
+		if not ev.get("template", false) or ev.get("choices", []).is_empty():
+			continue
+		if ev.has("system") and not s.has_system(ev["system"]):
+			continue
+		if s.fired_events.has(ev["id"]) and s.turn - int(s.fired_events[ev["id"]]) < 3:
+			continue
+		options.append(ev)
+	while not options.is_empty():
+		var ev: Dictionary = options.pop_at(s.rng.randi_range(0, options.size() - 1))
+		var candidates: Array = []
+		for iso in s.active_isos():
+			var key := "%s@%s" % [ev["id"], iso]
+			if s.fired_events.has(key) and s.turn - int(s.fired_events[key]) < 36:
+				continue
+			if conditions_met(s, ev.get("if", []), iso):
+				candidates.append(iso)
+		if candidates.is_empty():
+			continue
+		var iso: String = candidates[s.rng.randi_range(0, candidates.size() - 1)]
+		s.fired_events["%s@%s" % [ev["id"], iso]] = s.turn
+		fire(s, ev, iso, map_data, true)
+		return
+
+
+## Every presidency opens with a decision, so the first month is never empty.
+static func _opening(s: GameState) -> void:
+	s.fired_events["opening"] = s.turn
+	var card := {"id": "opening", "speaker": "chief", "art": "domestic", "ctx": "", "choices": [
+		{"label": "Abroad: call our allies first", "effects": [["us", "standing", 3], ["us", "political_capital", 5]], "advisors": {"state": 3, "un": 1}},
+		{"label": "At home: start with the voters", "effects": [["us", "approval", 2], ["us", "congress", 2]], "advisors": {"chief": 3, "treasury": 1}},
+		{"label": "In the shadows: start with the intelligence brief", "effects": [["funds", "covert", 1], ["trust", "cia", 6]], "advisors": {"cia": 3, "nsa": 1}},
+	]}
+	var key := "opening_" + String(s.scenario.get("id", ""))
+	system_card(card, key if _has_system_card(key) else "opening", {})
+	s.pending.append(card)
+
+
+static func _has_system_card(key: String) -> bool:
+	if _system_cards.is_empty():
+		var f := FileAccess.open("res://data/scenarios/system_cards.json", FileAccess.READ)
+		if f:
+			_system_cards = JSON.parse_string(f.get_as_text())
+	return _system_cards.has(key)
 
 
 static var _system_cards: Dictionary = {}
@@ -75,7 +140,7 @@ static func system_card(card: Dictionary, key: String, vars: Dictionary) -> void
 	card["voice"] = {"title": String(t["title"]), "text": String(t["text"]), "vars": vars}
 
 
-static func fire(s: GameState, ev: Dictionary, iso: String, map_data: Dictionary) -> void:
+static func fire(s: GameState, ev: Dictionary, iso: String, map_data: Dictionary, force_card: bool = false) -> void:
 	s.fired_events[ev["id"]] = s.turn
 	var name: String = s.c(iso).get("name", "") if iso != "" else ""
 	var title := String(ev.get("title", "")).replace("$NAME", name)
@@ -85,20 +150,20 @@ static func fire(s: GameState, ev: Dictionary, iso: String, map_data: Dictionary
 	for ch in choices:
 		ch["label"] = String(ch["label"]).replace("$NAME", name)
 	if choices.is_empty():
-		s.add_log("%s. %s" % [title, text], "headline")
+		s.add_log("%s. %s" % [title, text], "headline", iso)
 		return
-	if ev.get("minor", false) and s.auto_minor:
+	if ev.get("minor", false) and s.auto_minor and not force_card:
 		var best := cabinet_choice(s, choices)
 		apply(s, choices[best].get("effects", []), iso, map_data)
 		var adv: Dictionary = choices[best].get("advisors", {})
 		for id in adv:
 			Advisors.adjust(s, id, float(adv[id]))
-		s.add_log("%s. Your cabinet handled it: %s." % [title, String(choices[best]["label"]).trim_suffix(".")], "cabinet")
+		s.add_log("%s. Your cabinet handled it: %s." % [title, String(choices[best]["label"]).trim_suffix(".")], "cabinet", iso)
 		return
 	s.pending.append({"id": ev["id"], "title": title, "text": text, "ctx": iso, "speaker": ev.get("speaker", "nsa"),
 		"voice": {"title": String(ev.get("title", "")), "text": String(ev.get("text", "")), "vars": {"$NAME": name}},
 		"art": ev.get("art", art_for(String(ev["id"]), title)), "choices": choices})
-	s.add_log(title, "headline")
+	s.add_log(title, "headline", iso, 1)
 
 
 const ART_KEYS := [

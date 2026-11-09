@@ -53,5 +53,15 @@
   "speaker": "cia",
   "title": "The leader of $NAME has been assassinated",
   "text": "Gunmen killed the head of government of $NAME a few hours ago. The capital is locked down and rival factions are already moving. We have a narrow window to shape what comes next."
+ },
+ "opening_classic_1990": {
+  "speaker": "chief",
+  "title": "Your first morning in the Oval Office",
+  "text": "Good morning, and welcome to the desk. The Cold War is ending and nobody knows what comes next. The cabinet wants to know where you will put your first hundred days."
+ },
+ "opening_modern_2026": {
+  "speaker": "chief",
+  "title": "Your first morning in the Oval Office",
+  "text": "Good morning, and welcome to the desk. There is a war in Europe, a rival in the Pacific and a deficit at home. The cabinet wants to know where you will put your first hundred days."
  }
 }

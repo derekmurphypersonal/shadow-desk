@@ -25,6 +25,7 @@ func _ready() -> void:
 	_toggle("Colour-blind friendly map palette", "colorblind")
 	_section("Pacing")
 	_toggle("Cabinet handles minor events for you", "cabinet_minor")
+	_toggle("Play the month out on the map at End month", "month_sweep")
 	_toggle("Monthly newspaper", "show_digest")
 	_toggle("Newspaper only for big news", "digest_big_only")
 	_toggle("Typewriter text on briefings", "typewriter")

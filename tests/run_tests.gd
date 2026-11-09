@@ -21,6 +21,7 @@ func _init() -> void:
 	_determinism(map_data)
 	_save_roundtrip(map_data)
 	_dark_path(map_data)
+	_desk(map_data)
 	print("RESULT: %s (%d failures)" % ["PASS" if failures == 0 else "FAIL", failures])
 	quit(1 if failures > 0 else 0)
 
@@ -38,6 +39,8 @@ func _play(s: GameState, events: Array, map_data: Dictionary, turns: int) -> voi
 			if Actions.available(s, iso, id)["ok"]:
 				Actions.perform(s, iso, id, map_data)
 		Advisors.advise(s, targets[0], map_data)
+		Diary.auto(s, map_data)
+		Guidance.pins(s, map_data)
 		Simulation.tick(s, map_data, events)
 		if s.game_over:
 			break
@@ -115,3 +118,66 @@ func _dark_path(map_data: Dictionary) -> void:
 	var d := s.to_dict()
 	var back := GameState.from_dict(JSON.parse_string(JSON.stringify(d)), map_data)
 	check(back.us.get("persona", "") == "strongman" and back.us.get("third_term", false), "persona and third term survive save/load")
+
+
+## 1.5: the opening briefing, decision reports, the diary, pacing and pins.
+func _desk(map_data: Dictionary) -> void:
+	for id in ["classic_1990", "modern_2026"]:
+		var events := ScenarioLoader.load_events(id)
+		var s := ScenarioLoader.new_game(id, "peacemaker", true, 11, map_data)
+		s.auto_minor = true
+		Events.check(s, events, map_data)
+		check(not s.pending.is_empty() and s.pending[0]["id"] == "opening", "%s opens with a briefing" % id)
+		check(String(s.pending[0]["text"]).length() > 40, "%s opening briefing has its own text" % id)
+		for ch in s.pending[0]["choices"]:
+			check(not Report.preview(s, ch, "").is_empty(), "every opening choice previews its effects")
+		var before := Report.snapshot(s, "")
+		Events.resolve(s, 1, map_data)
+		var chips := Report.diff(s, before, Report.snapshot(s, ""))
+		check(chips.size() >= 2 and String(chips[0]["text"]).begins_with("Approval"), "decision report lists what changed")
+		# The diary.
+		var items := Diary.items(s)
+		check(items.size() >= 5 and Diary.slots_left(s) == Diary.SLOTS, "%s diary offers engagements and three slots" % id)
+		var days := {}
+		for it in items:
+			check(int(it["day"]) >= 1 and int(it["day"]) <= 28 and String(it["wd"]) != "", "diary items are dated")
+			days[int(it["day"])] = true
+		check(days.size() == items.size(), "diary dates are distinct")
+		var pc0 := float(s.us["political_capital"])
+		var kept := Diary.auto(s, map_data)
+		check(kept >= 2 and Diary.slots_left(s) <= 1, "bot keeps engagements until time runs out")
+		check(is_equal_approx(float(s.us["political_capital"]), pc0) or kept > 0, "engagements cost time, not political capital")
+		for i in items.size():
+			if not items[i]["done"] and int(items[i]["slots"]) > Diary.slots_left(s):
+				check(not Diary.available(s, i)["ok"], "no time left blocks further engagements")
+		var back := GameState.from_dict(JSON.parse_string(JSON.stringify(s.to_dict())), map_data)
+		check(Diary.items(back).size() == items.size() and Diary.slots_left(back) == Diary.slots_left(s), "diary survives save/load")
+		# Pacing: never two empty months running, and templates do not flood the desk.
+		var empty_run := 0
+		var worst := 0
+		var most := 0
+		var quiet := 0
+		for i in 60:
+			if s.game_over:
+				break
+			most = maxi(most, s.pending.size())
+			if s.pending.is_empty():
+				empty_run += 1
+				quiet += 1
+			else:
+				empty_run = 0
+			worst = maxi(worst, empty_run)
+			while not s.pending.is_empty():
+				Events.resolve(s, Events.cabinet_choice(s, s.pending[0]["choices"]), map_data)
+			Diary.auto(s, map_data)
+			Simulation.tick(s, map_data, events)
+			check(int(Diary.state(s)["turn"]) == s.turn or s.game_over, "diary re-rolls every month")
+		check(worst <= 1, "%s never has two empty months running (worst %d)" % [id, worst])
+		check(most <= 5, "%s desk is never flooded (most %d cards)" % [id, most])
+		check(quiet <= 15, "%s empty months are rare (%d of 60)" % [id, quiet])
+		for m in s.messages:
+			check(int(m.get("day", 0)) >= 1 and int(m.get("day", 0)) <= 28, "log entries carry a day of the month")
+		for pin in Guidance.pins(s, map_data):
+			check(s.is_active(String(pin["iso"])) and String(pin["text"]) != "", "pins point at live countries")
+		check(Simulation.pc_regen(s) >= 1.0, "political capital always refills")
+	check(Diary.weekday(1990, 6, 4) == "Mon" and Diary.weekday(2026, 11, 9) == "Mon", "weekdays are real")

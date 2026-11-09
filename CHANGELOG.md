@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.5.0 (2026-11-09)
+
+The playability release. A month now has something to do, something to watch and a clear place to look.
+
+- The President's diary: each month five or six dated engagements drawn from the state of the world (calls to leaders, a state dinner, a CIA deep-dive that clears the fog on a country, lunch on the Hill, a town hall, a press conference, a visit to the troops, a one-to-one with a wavering advisor, an operation review). You have time for three. They cost time, not political capital; unused time becomes a little political capital.
+- A new Desk tab: the diary, what needs your attention, and every operation and deployment you have running. The game returns to it at the start of each month.
+- Results you can see: every briefing option shows chips for its cost and likely effects; after you choose, the card shows what actually changed. Every figure in the top bar arrows its own changes. Actions float their effect over the country.
+- The month plays out: End month runs a few seconds in which the date counts through the month and your diary, your operations and the news appear on a timeline and on the map. Click or press a key to skip; a setting turns it off. Operations now report what they did each month.
+- The map as the to-do list: pins mark mandate targets, friends under attack, rival courtship and other openings. Click a country for an action ring of the four option types; the gold ring and star are your cabinet's pick.
+- Dossier rebuilt: your cabinet's top recommendations are buttons at the top; all other options fold into Diplomacy, Economic, Military and Covert, showing only what you can do now, with the rest under "Not possible now". Figures sit in two compact columns. The Oval Office tab is shorter, with charts under "Trends and records".
+- Steadier pacing: template events add at most two briefings a month; an empty month usually brings an event forward and two empty months never happen in a row. Political capital refills faster when low and slower when hoarded. Advice now names concrete uses for spare capital (trade deals, pacts, an envoy to a country close to a threshold).
+- A playable first month: every presidency opens with a voiced briefing, and a four-step checklist (answer a briefing, keep an engagement, act on a country, end the month) replaces the eight-screen tour.
+- A Find a country button on the map.
+- Tests: new checks for the diary, decision reports, pacing and pins; `tests/telemetry.gd` measures how much each month asks of the player.
+
+Measured with the guided bot over 8 presidencies per scenario (normal difficulty, default settings), 1.4 to 1.5: months with no briefing and no big news fell from 37% to 8% in 1990 and from 40% to 7% in 2026; the longest quiet run fell from 5 and 7 months to 1; average political capital on hand moved from 64 to 42 in 1990 and from 17 to 26 in 2026; the bot keeps about 2.9 diary engagements a month.
+
 ## 1.4.0 (2026-11-09)
 
 - Next Steps: a panel on the map and in the Oval Office lists what your cabinet would do next (budget fixes, mandate moves, friends in trouble, advisors about to quit). Click one to jump straight there with the right option ringed.

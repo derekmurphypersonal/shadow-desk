@@ -6,6 +6,7 @@ var _box: VBoxContainer
 var _approval: LineChart
 var _world: LineChart
 var _score: LineChart
+static var _trends_open := false
 
 
 func _ready() -> void:
@@ -40,7 +41,6 @@ func refresh() -> void:
 	tv.add_child(UITheme.bold(Personas.name_of(s), 12, UITheme.ACCENT))
 	h.add_child(tv)
 	_box.add_child(h)
-	_box.add_child(NextSteps.new().setup(5, false))
 
 	var agenda := PanelContainer.new()
 	agenda.add_theme_stylebox_override("panel", UITheme.box(UITheme.PANEL_2, UITheme.LINE, 8, 12))
@@ -95,16 +95,15 @@ func refresh() -> void:
 	_box.add_child(ap)
 	_box.add_child(_power_section(s))
 
-	var ops: Array = s.us.get("ops", [])
-	_box.add_child(UITheme.caps("Operations in progress (%d)" % ops.size()))
-	if ops.is_empty():
-		_box.add_child(UITheme.label("None. Ongoing options are marked ONGOING in a country's dossier.", 12, UITheme.MUTED))
-	for op in ops:
-		var b := UITheme.button("%s · %s · month %d" % [Actions.OP_NAMES[op["type"]], s.c(op["iso"]).get("name", op["iso"]), int(op["months"])], CountryPanel.OP_ICONS.get(op["type"], "score"))
-		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		b.pressed.connect(Game.select.bind(String(op["iso"])))
-		_box.add_child(b)
-
+	# ---- Trends and records, folded away until wanted.
+	var fold := UITheme.button("Trends and records  %s" % ("▾" if _trends_open else "▸"))
+	fold.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	fold.pressed.connect(func():
+		_trends_open = not _trends_open
+		refresh())
+	_box.add_child(fold)
+	if not _trends_open:
+		return
 	var vals_a: Array = []
 	var vals_s: Array = []
 	var vals_sc: Array = []

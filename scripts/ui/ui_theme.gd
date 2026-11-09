@@ -249,6 +249,32 @@ static func button(text: String, icon_name: String = "", primary: bool = false) 
 	return b
 
 
+## A small rounded label for a cost, an effect or a status.
+static func chip(text: String, color: Color, size: int = 10) -> Label:
+	var l := bold(text, size, color)
+	l.add_theme_stylebox_override("normal", box(Color(color, 0.12), Color(color, 0.45), 6, 4))
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return l
+
+
+## Colour for a Report chip tone. On paper (briefing cards) the colours are darker inks.
+static func tone(t: String, on_paper: bool = false) -> Color:
+	if on_paper:
+		return {"good": Color(0.1, 0.4, 0.2), "bad": Color(0.62, 0.17, 0.12)}.get(t, Color(0.33, 0.29, 0.22))
+	return {"good": GOOD, "bad": BAD, "accent": ACCENT, "warn": WARN}.get(t, MUTED)
+
+
+static func chip_row(chips: Array, on_paper: bool = false, size: int = 10) -> HFlowContainer:
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", 5)
+	flow.add_theme_constant_override("v_separation", 4)
+	flow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for c in chips:
+		flow.add_child(chip(String(c["text"]), tone(String(c["tone"]), on_paper), size))
+	return flow
+
+
 static func clear(node: Node) -> void:
 	for ch in node.get_children():
 		node.remove_child(ch)

@@ -28,6 +28,8 @@ func _ready() -> void:
 static func fog(s: GameState, iso: String, stat: String) -> float:
 	## Display noise from imperfect intelligence. Deterministic per turn so it doesn't flicker.
 	var d := s.c(iso)
+	if int(d.get("intel_until", -1)) > s.turn:
+		return 0.0
 	var acc := Advisors.intel_accuracy(s)
 	var amp := (100.0 - acc) * 0.15
 	if float(d.get("relation", 0.0)) > 50.0:
@@ -38,6 +40,8 @@ static func fog(s: GameState, iso: String, stat: String) -> float:
 
 
 static func fog_amp(s: GameState, iso: String) -> int:
+	if int(s.c(iso).get("intel_until", -1)) > s.turn:
+		return 0
 	var amp := (100.0 - Advisors.intel_accuracy(s)) * 0.15
 	if float(s.c(iso).get("relation", 0.0)) > 50.0:
 		amp *= 0.4
@@ -217,7 +221,7 @@ func refresh() -> void:
 		for op in ops:
 			_box.add_child(_op_row(s, iso, op))
 
-	# ---- Stats
+	# ---- Stats: relations, four tiles, then six figures in two columns.
 	var rel := float(d["relation"])
 	_box.add_child(_stat_row("Relations with US", rel + 100.0, 200.0, "%+d" % int(rel), UITheme.GOOD if rel >= 0.0 else UITheme.BAD))
 	var tiles := HBoxContainer.new()
@@ -227,77 +231,174 @@ func refresh() -> void:
 			["Per head", "$%s" % _fmt(gdppc)], ["Growth", "%+.1f%%" % float(d["growth"])]]:
 		var tp := PanelContainer.new()
 		tp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		tp.add_theme_stylebox_override("panel", UITheme.box(Color(1, 1, 1, 0.03), Color(1, 1, 1, 0.06), 6, 6))
+		tp.add_theme_stylebox_override("panel", UITheme.box(Color(1, 1, 1, 0.03), Color(1, 1, 1, 0.06), 6, 5))
 		var tv := VBoxContainer.new()
 		tv.add_theme_constant_override("separation", 0)
 		tv.add_child(UITheme.caps(pair[0], UITheme.MUTED, 9))
-		tv.add_child(UITheme.bold(pair[1], 13))
+		tv.add_child(UITheme.bold(pair[1], 12))
 		tp.add_child(tv)
 		tiles.add_child(tp)
 	_box.add_child(tiles)
 	var amp := fog_amp(s, iso)
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 14)
+	grid.add_theme_constant_override("v_separation", 3)
 	for st in STATS:
 		var key: String = st[0]
 		var v := clampf(float(d[key]) + fog(s, iso, key), 0.0, 100.0)
 		var good_high: bool = not st[2]
 		var t := v / 100.0 if good_high else 1.0 - v / 100.0
-		_box.add_child(_stat_row(st[1], v, 100.0, "%d%s" % [int(v), (" ±%d" % amp) if amp >= 2 else ""], UITheme.BAD.lerp(UITheme.GOOD, t)))
+		var cell := HBoxContainer.new()
+		cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var l := UITheme.label(st[1], 12, UITheme.MUTED)
+		l.custom_minimum_size.x = 68
+		cell.add_child(l)
+		cell.add_child(UITheme.bar(v, 100.0, UITheme.BAD.lerp(UITheme.GOOD, t), 7))
+		var vl := UITheme.bold("%d" % int(v), 12)
+		vl.custom_minimum_size.x = 24
+		vl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		cell.add_child(vl)
+		grid.add_child(cell)
+	_box.add_child(grid)
+	if amp >= 2:
+		_box.add_child(UITheme.label("Figures are estimates, ±%d. A CIA deep-dive in the diary clears the fog." % amp, 10, UITheme.MUTED))
+	elif int(d.get("intel_until", -1)) > s.turn:
+		_box.add_child(UITheme.label("Clear intelligence for %d more months." % (int(d["intel_until"]) - s.turn), 10, UITheme.GOOD))
 
-	# ---- Actions
+	# ---- What the cabinet would do here, as buttons.
+	var advice := Advisors.advise(s, iso, Game.map_data)
+	var recs := {}
+	var rec_order: Array = []
+	var hl: String = Game.highlight.get("action", "") if Game.highlight.get("iso", "") == iso else ""
+	if hl != "" and Actions.DEFS.has(hl) and not _hidden(s, iso, hl) and Actions.available(s, iso, hl)["ok"]:
+		recs[hl] = ["Next step"]
+		rec_order.append(hl)
+	for a in advice:
+		var act := String(a["action"])
+		if act == "" or not Actions.DEFS.has(act) or _hidden(s, iso, act) or not Actions.available(s, iso, act)["ok"]:
+			continue
+		if not recs.has(act):
+			recs[act] = []
+			rec_order.append(act)
+		recs[act].append(Report.short_title(s, String(a["id"])))
+	rec_order.sort_custom(func(x, y):
+		if (x == hl) != (y == hl):
+			return x == hl
+		return recs[x].size() > recs[y].size())
+	_box.add_child(HSeparator.new())
 	var head := HBoxContainer.new()
-	head.add_child(UITheme.caps("Your options"))
+	head.add_child(UITheme.caps("Your cabinet recommends"))
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(sp)
 	head.add_child(UITheme.label("%d PC available" % int(s.us["political_capital"]), 11, UITheme.MUTED))
-	_box.add_child(HSeparator.new())
 	_box.add_child(head)
-	var shown_cat := ""
+	if rec_order.is_empty():
+		_box.add_child(UITheme.wrap(UITheme.label("Nothing they would push for here right now.", 12, UITheme.MUTED)))
+	for act in rec_order.slice(0, 2):
+		var row := _action_row(s, iso, act, " · ".join(recs[act]))
+		_box.add_child(row)
+		_mark_rec(row)
+		if act == hl:
+			focus_row = row
+			_mark(row)
+
+	# ---- Everything else, folded by type. Only what you can do now; the rest is under one line.
+	_box.add_child(UITheme.caps("All options"))
+	var by_cat := {}
+	var blocked: Array = []
 	for id in Actions.ORDER:
 		var def: Dictionary = Actions.DEFS[id]
 		if def.has("system") and not s.has_system(def["system"]):
 			continue
 		if _hidden(s, iso, id):
 			continue
-		if def["cat"] != shown_cat:
-			shown_cat = def["cat"]
-			var ch := HBoxContainer.new()
-			ch.add_child(UITheme.icon_rect(CAT_ICONS.get(def["cat"], "score"), 13, CAT_COLORS[def["cat"]]))
-			ch.add_child(UITheme.bold(def["cat"].to_upper(), 10, CAT_COLORS[def["cat"]]))
-			_box.add_child(ch)
-		var arow := _action_row(s, iso, id)
-		_box.add_child(arow)
-		if Game.highlight.get("iso", "") == iso and Game.highlight.get("action", "") == id:
-			_mark(arow)
-			focus_row = arow
+		if Actions.available(s, iso, id)["ok"]:
+			if not by_cat.has(def["cat"]):
+				by_cat[def["cat"]] = []
+			by_cat[def["cat"]].append(id)
+		else:
+			blocked.append(id)
+	if hl != "" and Actions.DEFS.has(hl):
+		_open[Actions.DEFS[hl]["cat"]] = true
+	for cat in ["Diplomacy", "Economic", "Military", "Covert"]:
+		var ids: Array = by_cat.get(cat, [])
+		_box.add_child(_fold(cat, "%d available" % ids.size() if not ids.is_empty() else "nothing now", CAT_COLORS[cat], CAT_ICONS[cat], ids.is_empty()))
+		if _open.get(cat, false):
+			for id in ids:
+				_box.add_child(_action_row(s, iso, id))
+	if not blocked.is_empty():
+		_box.add_child(_fold("Not possible now", "%d · see why" % blocked.size(), UITheme.MUTED, "", false))
+		if _open.get("Not possible now", false):
+			for id in blocked:
+				_box.add_child(_action_row(s, iso, id))
 
-	# ---- Advice
-	_box.add_child(HSeparator.new())
-	_box.add_child(UITheme.caps("Cabinet advice"))
-	for a in Advisors.advise(s, iso, Game.map_data):
-		var pc := PanelContainer.new()
-		pc.add_theme_stylebox_override("panel", UITheme.box(UITheme.PANEL_2, UITheme.LINE, 8, 8))
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 10)
-		var pr := UITheme.portrait_rect(String(a["name"]), 44)
-		pr.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-		row.add_child(pr)
-		var v := VBoxContainer.new()
-		v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		v.add_theme_constant_override("separation", 1)
-		v.add_child(UITheme.label("%s · %s" % [a["title"], a["name"]], 11, UITheme.MUTED))
-		v.add_child(UITheme.wrap(UITheme.label(String(a["text"]), 13)))
-		if a["action"] != "" and Actions.DEFS.has(a["action"]):
-			v.add_child(UITheme.bold("Recommends: " + String(Actions.DEFS[a["action"]]["label"]), 11, UITheme.ACCENT))
-		row.add_child(v)
-		pc.add_child(row)
-		_box.add_child(pc)
+	# ---- What each advisor says, on request.
+	_box.add_child(_fold("What each advisor says", "%d voices" % advice.size(), UITheme.MUTED, "", false))
+	if _open.get("What each advisor says", false):
+		for a in advice:
+			var pc := PanelContainer.new()
+			pc.add_theme_stylebox_override("panel", UITheme.box(UITheme.PANEL_2, UITheme.LINE, 8, 8))
+			var row := HBoxContainer.new()
+			row.add_theme_constant_override("separation", 10)
+			var pr := UITheme.portrait_rect(String(a["name"]), 40)
+			pr.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+			row.add_child(pr)
+			var v := VBoxContainer.new()
+			v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			v.add_theme_constant_override("separation", 1)
+			v.add_child(UITheme.label("%s · %s" % [a["title"], a["name"]], 11, UITheme.MUTED))
+			v.add_child(UITheme.wrap(UITheme.label(String(a["text"]), 12)))
+			if a["action"] != "" and Actions.DEFS.has(a["action"]):
+				v.add_child(UITheme.bold("Recommends: " + String(Actions.DEFS[a["action"]]["label"]), 11, UITheme.ACCENT))
+			row.add_child(v)
+			pc.add_child(row)
+			_box.add_child(pc)
 	await get_tree().process_frame
 	if focus_row != null and is_instance_valid(focus_row):
 		ensure_control_visible(focus_row)
 		Game.highlight = {}
 	else:
 		scroll_vertical = scroll_before
+
+
+## Which folds are open. Remembered while the game runs so the dossier opens the way you left it.
+static var _open := {}
+
+
+func _fold(title: String, note: String, color: Color, icon_name: String, empty: bool) -> Control:
+	var open: bool = _open.get(title, false)
+	var b := Button.new()
+	b.focus_mode = Control.FOCUS_NONE
+	b.disabled = empty
+	b.custom_minimum_size.y = 32
+	b.add_theme_stylebox_override("normal", UITheme.box(UITheme.PANEL_2, Color(color, 0.35), 7, 8))
+	b.add_theme_stylebox_override("hover", UITheme.box(UITheme.PANEL_2.lerp(color, 0.12), color, 7, 8))
+	b.add_theme_stylebox_override("pressed", UITheme.box(UITheme.PANEL_2.lerp(color, 0.2), color, 7, 8))
+	b.add_theme_stylebox_override("disabled", UITheme.box(Color(0.06, 0.08, 0.12), Color(1, 1, 1, 0.05), 7, 8))
+	var h := HBoxContainer.new()
+	h.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	h.offset_left = 10
+	h.offset_right = -10
+	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if icon_name != "":
+		h.add_child(UITheme.icon_rect(icon_name, 14, color if not empty else UITheme.MUTED))
+	var t := UITheme.bold(title, 13, color if not empty else UITheme.MUTED)
+	t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	h.add_child(t)
+	h.add_child(UITheme.label("%s  %s" % [note, "" if empty else ("▾" if open else "▸")], 11, UITheme.MUTED))
+	b.add_child(h)
+	b.pressed.connect(func():
+		Audio.sfx("click", -6.0)
+		_open[title] = not open
+		refresh())
+	return b
+
+
+func _mark_rec(row: Control) -> void:
+	if row is PanelContainer:
+		row.add_theme_stylebox_override("panel", UITheme.box(Color(UITheme.ACCENT, 0.08), Color(UITheme.ACCENT, 0.7), 7, 9))
 
 
 ## Ring an option the Next Steps panel pointed at.
@@ -340,14 +441,14 @@ func _hidden(s: GameState, iso: String, id: String) -> bool:
 	return false
 
 
-func _action_row(s: GameState, iso: String, id: String) -> Control:
+func _action_row(s: GameState, iso: String, id: String, who: String = "") -> Control:
 	var def: Dictionary = Actions.DEFS[id]
 	var check := Actions.available(s, iso, id)
 	var ok: bool = check["ok"]
 	var col: Color = CAT_COLORS[def["cat"]]
 	var card := PanelContainer.new()
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var normal := UITheme.box(UITheme.PANEL_2, Color(col, 0.3), 7, 9)
+	var normal := UITheme.box(UITheme.PANEL_2, Color(col, 0.3), 7, 9) if who == "" else UITheme.box(Color(UITheme.ACCENT, 0.08), Color(UITheme.ACCENT, 0.7), 7, 9)
 	var hover := UITheme.box(UITheme.PANEL_2.lerp(col, 0.14), col, 7, 9)
 	var off := UITheme.box(Color(0.06, 0.08, 0.12), Color(1, 1, 1, 0.05), 7, 9)
 	card.add_theme_stylebox_override("panel", normal if ok else off)
@@ -360,6 +461,10 @@ func _action_row(s: GameState, iso: String, id: String) -> Control:
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	v.add_theme_constant_override("separation", 1)
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if who != "":
+		var wl := UITheme.label(who, 10, UITheme.ACCENT)
+		wl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		v.add_child(wl)
 	var title_row := HBoxContainer.new()
 	title_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var t := UITheme.bold(String(def["label"]), 13, UITheme.TEXT if ok else UITheme.MUTED)

@@ -1,111 +1,100 @@
 class_name Tutorial
-extends Control
-## First-game walkthrough: dims the screen, spotlights one region at a time, explains it.
+extends PanelContainer
+## The first month, played rather than read: a short checklist that ticks itself off as the new
+## President answers a briefing, keeps a diary engagement, acts on a country and ends the month.
+## One line of help per step. The longer explanation stays under Menu > How to play.
 
 signal finished
 
-var steps: Array = []   # [{target: Control or null, title, text}]
-var _i := 0
-var _panel: PanelContainer
-var _title: Label
-var _text: Label
-var _count: Label
-var _hole := Rect2()
+const STEPS := [
+	["Answer your first briefing", "Crises and choices arrive as briefing cards. Each option shows what it costs and what it is likely to change."],
+	["Keep one diary engagement", "The Desk tab on the right lists this month's diary. Engagements cost time, not political capital. Pick one."],
+	["Act on a country", "Click a pinned country on the map (or any country), then pick an option from the ring or from its dossier. Options cost political capital."],
+	["End the month", "Press End month (Enter). The month plays out on the map, then the next briefing arrives."],
+]
 
-
-func setup(s: Array) -> Tutorial:
-	steps = s
-	return self
+var _rows: Array = []
+var _hint: Label
+var _start_actions := 0
+var _start_turn := 0
+var _done := false
 
 
 func _ready() -> void:
-	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	mouse_filter = Control.MOUSE_FILTER_STOP
-	_panel = PanelContainer.new()
-	_panel.add_theme_stylebox_override("panel", UITheme.shadow_box(UITheme.PANEL, UITheme.ACCENT, 10, 18))
-	_panel.custom_minimum_size = Vector2(380, 0)
-	add_child(_panel)
+	add_theme_stylebox_override("panel", UITheme.shadow_box(Color(0.03, 0.05, 0.09, 0.96), UITheme.ACCENT, 8, 12))
+	custom_minimum_size = Vector2(340, 0)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 8)
-	_panel.add_child(v)
-	_count = UITheme.caps("")
-	v.add_child(_count)
-	_title = UITheme.heading("", 22)
-	v.add_child(_title)
-	_text = UITheme.wrap(UITheme.label("", 14))
-	_text.custom_minimum_size.x = 340
-	v.add_child(_text)
-	var row := HBoxContainer.new()
-	var skip := UITheme.button("Skip tutorial")
+	v.add_theme_constant_override("separation", 5)
+	add_child(v)
+	var head := HBoxContainer.new()
+	var t := UITheme.caps("Your first month")
+	t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(t)
+	var skip := Button.new()
+	skip.flat = true
+	skip.text = "Skip"
+	skip.focus_mode = Control.FOCUS_NONE
+	skip.add_theme_font_size_override("font_size", 11)
+	skip.add_theme_color_override("font_color", UITheme.MUTED)
 	skip.pressed.connect(_finish)
-	row.add_child(skip)
-	var sp := Control.new()
-	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(sp)
-	var nxt := UITheme.button("Next", "", true)
-	nxt.custom_minimum_size.x = 100
-	nxt.pressed.connect(_next)
-	row.add_child(nxt)
-	v.add_child(row)
-	resized.connect(_layout)
-	_show()
+	head.add_child(skip)
+	v.add_child(head)
+	for st in STEPS:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		var box := UITheme.bold("○", 14, UITheme.MUTED)
+		box.custom_minimum_size.x = 16
+		row.add_child(box)
+		var l := UITheme.bold(st[0], 13, UITheme.MUTED)
+		row.add_child(l)
+		v.add_child(row)
+		_rows.append([box, l])
+	_hint = UITheme.wrap(UITheme.label("", 12, UITheme.TEXT))
+	_hint.custom_minimum_size.x = 316
+	v.add_child(_hint)
+	if Game.has_game():
+		_start_actions = int(Game.state.stats.get("actions", 0))
+		_start_turn = Game.state.turn
+	Game.state_changed.connect(refresh)
+	refresh()
 
 
-func _show() -> void:
-	var st: Dictionary = steps[_i]
-	_count.text = "Briefing %d of %d" % [_i + 1, steps.size()]
-	_title.text = st["title"]
-	_text.text = st["text"]
-	_layout()
-	_panel.modulate.a = 0.0
-	create_tween().tween_property(_panel, "modulate:a", 1.0, 0.2)
+func step() -> int:
+	if not Game.has_game():
+		return 0
+	var s := Game.state
+	if s.turn > _start_turn:
+		return 4
+	if not s.pending.is_empty():
+		return 0
+	if Diary.slots_used(s) == 0 and Diary.slots_left(s) > 0:
+		return 1
+	if int(s.stats.get("actions", 0)) <= _start_actions and float(s.us["political_capital"]) >= 5.0:
+		return 2
+	return 3
 
 
-func _layout() -> void:
-	if steps.is_empty():
+func refresh() -> void:
+	if _done:
 		return
-	var target: Control = steps[_i].get("target")
-	_hole = Rect2()
-	if target and is_instance_valid(target):
-		_hole = target.get_global_rect().grow(6)
-		_hole.position -= global_position
-	_panel.reset_size()
-	var ps := _panel.get_combined_minimum_size()
-	var pos := size * 0.5 - ps * 0.5
-	if _hole.size != Vector2.ZERO:
-		# Place the panel beside the spotlight, wherever there is room.
-		if _hole.end.x + ps.x + 20 < size.x:
-			pos = Vector2(_hole.end.x + 16, clampf(_hole.position.y, 16, size.y - ps.y - 16))
-		elif _hole.position.x - ps.x - 20 > 0:
-			pos = Vector2(_hole.position.x - ps.x - 16, clampf(_hole.position.y, 16, size.y - ps.y - 16))
-		elif _hole.end.y + ps.y + 20 < size.y:
-			pos = Vector2(clampf(_hole.position.x, 16, size.x - ps.x - 16), _hole.end.y + 16)
-		else:
-			pos = Vector2(clampf(_hole.position.x, 16, size.x - ps.x - 16), maxf(16, _hole.position.y - ps.y - 16))
-	_panel.position = pos
-	queue_redraw()
-
-
-func _draw() -> void:
-	var dim := Color(0, 0, 0, 0.62)
-	if _hole.size == Vector2.ZERO:
-		draw_rect(Rect2(Vector2.ZERO, size), dim)
-		return
-	draw_rect(Rect2(0, 0, size.x, _hole.position.y), dim)
-	draw_rect(Rect2(0, _hole.end.y, size.x, size.y - _hole.end.y), dim)
-	draw_rect(Rect2(0, _hole.position.y, _hole.position.x, _hole.size.y), dim)
-	draw_rect(Rect2(_hole.end.x, _hole.position.y, size.x - _hole.end.x, _hole.size.y), dim)
-	draw_rect(_hole, UITheme.ACCENT, false, 2.0)
-
-
-func _next() -> void:
-	_i += 1
-	if _i >= steps.size():
+	var cur := step()
+	for i in _rows.size():
+		var box: Label = _rows[i][0]
+		var l: Label = _rows[i][1]
+		var state := "done" if i < cur else ("now" if i == cur else "later")
+		box.text = "✓" if state == "done" else ("▸" if state == "now" else "○")
+		var col: Color = UITheme.GOOD if state == "done" else (UITheme.ACCENT if state == "now" else UITheme.MUTED)
+		box.add_theme_color_override("font_color", col)
+		l.add_theme_color_override("font_color", UITheme.TEXT if state == "now" else col)
+	if cur >= STEPS.size():
 		_finish()
 	else:
-		_show()
+		_hint.text = STEPS[cur][1]
 
 
 func _finish() -> void:
+	if _done:
+		return
+	_done = true
 	Settings.set_value("tutorial_done", true)
 	finished.emit()

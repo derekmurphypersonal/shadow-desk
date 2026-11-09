@@ -50,6 +50,19 @@ var _digest_items: Array = []
 var _show_election := false
 var _busy := false
 var _shot_spec := ""
+var wheel: ActionWheel
+var desk_strip: Button
+var tutorial_box: Tutorial
+var _last_vals: Dictionary = {}      # top-bar figures as last shown, to arrow every change
+var _delta_age: Dictionary = {}
+var _sweeping := false
+var _new_month := false
+
+const TAB_DESK := 0
+const TAB_COUNTRY := 1
+const TAB_OVAL := 2
+const TAB_CABINET := 4
+const TAB_BUDGET := 5
 
 
 func _ready() -> void:
@@ -78,19 +91,26 @@ func _ready() -> void:
 	map.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	map_holder.add_child(map)
 	map.country_clicked.connect(Game.select)
+	map.country_picked.connect(func(iso, _at): wheel.open(iso))
+	map.wheel_open = func(): return wheel != null and wheel.visible
+	map.pin_clicked.connect(_on_guidance)
+	wheel = ActionWheel.new().setup(map)
+	map_holder.add_child(wheel)
 	map_holder.add_child(_build_map_controls())
-	var steps := NextSteps.new().setup(3, true)
-	steps.position = Vector2(14, 72)
-	steps.custom_minimum_size = Vector2(340, 0)
-	steps.size = Vector2(340, 0)
-	map_holder.add_child(steps)
+	# The desk strip: time left in the diary, one click from the Desk tab.
+	desk_strip = UITheme.button("")
+	desk_strip.position = Vector2(14, 66)
+	desk_strip.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	desk_strip.tooltip_text = "Open the Desk: this month's diary and what needs your attention."
+	desk_strip.pressed.connect(func(): tabs.current_tab = TAB_DESK)
+	map_holder.add_child(desk_strip)
 
 	tabs = TabContainer.new()
 	tabs.custom_minimum_size = Vector2(440, 0)
 	tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	tabs.tab_changed.connect(func(_i): Audio.sfx("click", -6.0))
 	body.add_child(tabs)
-	for spec in [["Country", CountryPanel.new()], ["Oval Office", HomePanel.new()], ["Briefings", BriefingsPanel.new()],
+	for spec in [["Desk", DeskPanel.new()], ["Country", CountryPanel.new()], ["Oval Office", HomePanel.new()], ["Briefings", BriefingsPanel.new()],
 			["Cabinet", CabinetPanel.new()], ["Budget", BudgetPanel.new()]]:
 		var c: Control = spec[1]
 		c.name = spec[0]
@@ -131,6 +151,8 @@ func _ready() -> void:
 	Game.message.connect(show_toast)
 	Game.game_ended.connect(_advance_flow)
 	Game.guidance_go.connect(_on_guidance)
+	Game.focus_country.connect(func(iso): map.focus(iso))
+	Game.action_done.connect(_on_action_done)
 
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--screenshot="):
@@ -142,6 +164,11 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	for key in _delta_age.keys():
+		_delta_age[key] = float(_delta_age[key]) + delta
+		if float(_delta_age[key]) > 6.0:
+			(top_deltas[key] as Label).text = ""
+			_delta_age.erase(key)
 	if _toast_time > 0.0:
 		_toast_time -= delta
 		if _toast_time <= 0.0:
@@ -265,6 +292,10 @@ func _build_map_controls() -> Control:
 	var reset := UITheme.button("Reset view")
 	reset.pressed.connect(func(): map.reset_view())
 	v.add_child(reset)
+	var find := UITheme.button("Find a country")
+	find.tooltip_text = "Search by name (Cmd/Ctrl+F)"
+	find.pressed.connect(_show_search)
+	v.add_child(find)
 	return pc
 
 
@@ -273,14 +304,15 @@ func _on_guidance(it: Dictionary) -> void:
 	if iso != "":
 		Game.highlight = {"iso": iso, "action": String(it.get("action", ""))}
 		Game.select(iso)
+		wheel.open(iso)
 		return
 	match String(it.get("tab", "")):
 		"oval":
-			tabs.current_tab = 1
+			tabs.current_tab = TAB_OVAL
 		"cabinet":
-			tabs.current_tab = 3
+			tabs.current_tab = TAB_CABINET
 		"budget":
-			tabs.current_tab = 4
+			tabs.current_tab = TAB_BUDGET
 
 
 func _on_mode(i: int) -> void:
@@ -290,7 +322,21 @@ func _on_mode(i: int) -> void:
 
 func _on_select(iso: String) -> void:
 	if iso != "":
-		tabs.current_tab = 0
+		tabs.current_tab = TAB_COUNTRY
+
+
+## An action or a diary engagement just resolved: float what it changed over the country.
+func _on_action_done(iso: String, chips: Array) -> void:
+	if iso == "" or chips.is_empty():
+		return
+	var parts: Array = []
+	for c in chips:
+		var tx := String(c["text"])
+		var nm := String(Game.state.c(iso).get("name", ""))
+		if tx.begins_with(nm + " "):
+			parts.append(tx.trim_prefix(nm + " ").capitalize())
+	if not parts.is_empty():
+		map.add_fx(iso, "note", " · ".join(parts.slice(0, 2)), 0.9)
 
 
 func _refresh() -> void:
@@ -298,7 +344,9 @@ func _refresh() -> void:
 		return
 	var s := Game.state
 	var u: Dictionary = s.us
-	var prev: Dictionary = s.history[s.history.size() - 2] if s.history.size() >= 2 else {}
+	_refresh_strip(s)
+	if _sweeping:
+		return
 	(top_labels["date"] as Label).text = s.date_string()
 	var tip := "Approval is heading toward %d%%:" % int(Simulation.approval_target(s))
 	for f in Simulation.approval_factors(s):
@@ -306,34 +354,55 @@ func _refresh() -> void:
 			tip += "\n  %s  %s" % [f[0], ("%d" % int(round(float(f[1])))) if f[0] == "Baseline" else ("%+d" % int(round(float(f[1]))))]
 	tip += "\nBelow 50% on election day and you lose."
 	(top_cells["approval"] as Control).tooltip_text = tip
-	_set_top("approval", "%d%%" % int(u["approval"]), float(u["approval"]) >= 50.0, float(u["approval"]) < 42.0, float(u["approval"]) - float(prev.get("approval", u["approval"])))
-	_set_top("pc", "%d" % int(u["political_capital"]), float(u["political_capital"]) >= 40.0, float(u["political_capital"]) < 15.0, 0.0)
-	_set_top("congress", "%d%%" % int(u["congress"]), float(u["congress"]) >= 50.0, float(u["congress"]) < 40.0, 0.0)
-	_set_top("standing", "%d" % int(u.get("standing", 50)), float(u.get("standing", 50)) >= 60.0, float(u.get("standing", 50)) < 40.0, float(u.get("standing", 50)) - float(prev.get("standing", u.get("standing", 50))))
-	_set_top("scandal", "%d" % int(u["scandal"]), float(u["scandal"]) < 20.0, float(u["scandal"]) >= 60.0, 0.0)
+	_set_top("approval", "%d%%" % int(u["approval"]), float(u["approval"]) >= 50.0, float(u["approval"]) < 42.0, float(u["approval"]))
+	_set_top("pc", "%d" % int(u["political_capital"]), float(u["political_capital"]) >= 40.0, float(u["political_capital"]) < 15.0, float(u["political_capital"]))
+	_set_top("congress", "%d%%" % int(u["congress"]), float(u["congress"]) >= 50.0, float(u["congress"]) < 40.0, float(u["congress"]))
+	_set_top("standing", "%d" % int(u.get("standing", 50)), float(u.get("standing", 50)) >= 60.0, float(u.get("standing", 50)) < 40.0, float(u.get("standing", 50)))
+	_set_top("scandal", "%d" % int(u["scandal"]), float(u["scandal"]) < 20.0, float(u["scandal"]) >= 60.0, float(u["scandal"]), true)
 	var deficit := Simulation.budget_deficit_pct(s)
-	_set_top("deficit", "%.1f%%" % deficit, deficit < 3.0, deficit > 6.0, 0.0)
+	_set_top("deficit", "%.1f%%" % deficit, deficit < 3.0, deficit > 6.0, deficit * 10.0, true, 10.0)
 	var etxt := ("%d mo" % (s.next_election_turn - s.turn)) if s.elections_enabled else "off"
 	if s.next_election_turn >= s.end_turn:
 		etxt = "Term ends %d mo" % (s.end_turn - s.turn)
-	_set_top("election", etxt, false, s.elections_enabled and s.next_election_turn - s.turn <= 3, 0.0)
-	_set_top("agenda", "%d" % int(s.agenda_score()), s.agenda_score() > 0.0, s.agenda_score() < 0.0, 0.0)
+	_set_top("election", etxt, false, s.elections_enabled and s.next_election_turn - s.turn <= 3, NAN)
+	_set_top("agenda", "%d" % int(s.agenda_score()), s.agenda_score() > 0.0, s.agenda_score() < 0.0, s.agenda_score())
 	end_button.disabled = s.game_over
 	if not s.messages.is_empty():
 		var m: Dictionary = s.messages[s.messages.size() - 1]
 		ticker.text = "%s   %s" % [m["date"], m["text"]]
 
 
-func _set_top(key: String, text: String, good: bool, bad: bool, delta: float) -> void:
+## Every figure in the top bar arrows its own change (since it was last shown) for a few seconds.
+## value is the raw figure (NAN = no arrow); lower_better flips the colour; div scales the arrow's number.
+func _set_top(key: String, text: String, good: bool, bad: bool, value: float, lower_better: bool = false, div: float = 1.0) -> void:
 	var l: Label = top_labels[key]
 	l.text = text
 	l.add_theme_color_override("font_color", UITheme.GOOD if good else (UITheme.BAD if bad else UITheme.TEXT))
+	if is_nan(value):
+		return
 	var d: Label = top_deltas[key]
-	if absf(delta) >= 0.5:
-		d.text = ("▲%d" if delta > 0 else "▼%d") % int(round(absf(delta)))
-		d.add_theme_color_override("font_color", UITheme.GOOD if delta > 0 else UITheme.BAD)
-	else:
-		d.text = ""
+	if _last_vals.has(key):
+		var delta := value - float(_last_vals[key])
+		if absf(delta) >= 0.5:
+			var shown := absf(delta) / div
+			d.text = ("▲%s" if delta > 0 else "▼%s") % (("%d" % int(round(shown))) if div == 1.0 else ("%.1f" % shown))
+			d.add_theme_color_override("font_color", UITheme.GOOD if (delta > 0) != lower_better else UITheme.BAD)
+			_delta_age[key] = 0.0
+			var tw := l.create_tween()
+			tw.tween_property(l, "modulate", Color(1.5, 1.4, 1.1), 0.12)
+			tw.tween_property(l, "modulate", Color.WHITE, 0.5)
+	_last_vals[key] = value
+
+
+func _refresh_strip(s: GameState) -> void:
+	if desk_strip == null:
+		return
+	var left := Diary.slots_left(s)
+	var pips := ""
+	for i in Diary.SLOTS:
+		pips += "●" if i < left else "○"
+	var need := Guidance.pins(s, Game.map_data).size()
+	desk_strip.text = "  DIARY  %s  %s%s  " % [pips, ("%d slot%s free" % [left, "" if left == 1 else "s"]) if left > 0 else "month full", ("   ·   %d pinned on the map" % need) if need > 0 else ""]
 
 
 func show_toast(text: String) -> void:
@@ -361,12 +430,77 @@ func _end_month() -> void:
 	if not Game.state.pending.is_empty():
 		_advance_flow()
 		return
+	var old := Game.state
+	var old_turn := old.turn
+	var month_name := GameState.month_name(old.month)
+	var year := old.year
+	var mark := old.messages.size()
+	wheel.close()
+	_sweeping = Settings.get_value("month_sweep")
 	Game.end_month()
 	var s := Game.state
 	_digest_items = _digest_for(s.turn, s.turn)
-	_celebrate(s.turn, s.turn)
 	_show_election = not s.last_election.is_empty() and int(s.last_election.get("turn", -1)) == s.turn
-	_advance_flow()
+	_new_month = true
+	if not _sweeping:
+		_celebrate(s.turn, s.turn)
+		_advance_flow()
+		return
+	var sweep := MonthSweep.new().setup(_sweep_entries(s, old_turn, mark), month_name, year)
+	sweep.right_inset = tabs.size.x
+	sweep.entry_shown.connect(_on_sweep_entry)
+	_open_modal(sweep, 0.0)
+	sweep.finished.connect(func():
+		_close_modal()
+		_sweeping = false
+		_refresh()
+		_celebrate(s.turn, s.turn)
+		_advance_flow())
+
+
+## What happened during the month just ended, in date order: your diary, your operations, the news.
+func _sweep_entries(s: GameState, old_turn: int, mark: int) -> Array:
+	var out: Array = []
+	for i in s.messages.size():
+		var m: Dictionary = s.messages[i]
+		if int(m["turn"]) != old_turn:
+			continue
+		var kind := String(m["kind"])
+		var mine := kind == "diary"
+		if not mine and (i < mark or kind not in ["headline", "war", "scandal", "cabinet", "op"]):
+			continue
+		var tx := String(m["text"])
+		var tone := "neutral"
+		var pri := 1
+		if kind in ["war", "scandal"] or tx.begins_with("Mandate missed") or tx.contains("halted"):
+			tone = "bad"
+			pri = 3
+		elif tx.begins_with("MANDATE MET") or tx.begins_with("VICTORY") or tx.contains("ceasefire") or tx.contains("Western camp"):
+			tone = "good"
+			pri = 3
+		elif kind == "op":
+			tone = "accent"
+			pri = 2
+		elif mine:
+			tone = "good"
+			pri = 2
+		elif GameState.is_big_news(m):
+			tone = "warn"
+			pri = 3
+		tx = tx.split(". Your cabinet handled it")[0].split(". ")[0].trim_suffix(".")
+		if tx.length() > 48:
+			tx = tx.substr(0, 46) + "…"
+		out.append({"day": int(m.get("day", 15)), "text": tx, "tone": tone, "iso": String(m.get("iso", "")), "kind": kind, "pri": pri})
+	out.sort_custom(func(a, b): return int(a["pri"]) > int(b["pri"]))
+	out = out.slice(0, 9)
+	out.sort_custom(func(a, b): return int(a["day"]) < int(b["day"]))
+	return out
+
+
+func _on_sweep_entry(e: Dictionary) -> void:
+	Audio.sfx("key", -8.0)
+	if String(e["iso"]) != "" and String(e["kind"]) != "diary":
+		map.add_fx(String(e["iso"]), "note_" + String(e["tone"]), "")
 
 
 func _digest_for(last: int, first: int) -> Array:
@@ -443,12 +577,16 @@ func _advance_flow() -> void:
 			map.focus(card["ctx"])
 		var bc := BriefingCard.new().setup(card)
 		_open_modal(bc, 0.6)
-		bc.chosen.connect(func(i):
+		bc.chosen.connect(func(_i):
 			_close_modal()
-			Game.choose(i)
 			_advance_flow())
 		return
 	Audio.music("situation")
+	if _new_month:
+		_new_month = false
+		# A new month: back to the Desk, where the new diary is waiting.
+		if tutorial_box == null:
+			tabs.current_tab = TAB_DESK
 
 
 func _open_modal(content: Control, dim_alpha: float = 0.6) -> void:
@@ -537,7 +675,11 @@ func _show_help() -> void:
 	rt.bbcode_enabled = true
 	rt.fit_content = true
 	rt.custom_minimum_size = Vector2(580, 0)
-	rt.text = """[b]Each month[/b] you read your briefings, act on the world, then press [b]End month[/b] (Enter).
+	rt.text = """[b]Each month[/b] you answer your briefings, keep up to three diary engagements, act on the world, then press [b]End month[/b] (Enter). The month then plays out on the map; click to skip.
+
+[b]The diary[/b] (Desk tab) offers dated engagements: calls, dinners, intelligence deep-dives, the Hill, town halls. They cost time, not political capital, and time you leave unused becomes a little political capital.
+
+[b]On the map[/b], pins mark what needs you. Click a country for a ring of the four option types; the gold ring is what your cabinet would do. The Country tab has the full dossier.
 
 [b]Actions[/b] cost political capital (PC) and money from your budget funds. Hover any action to see its cost, odds and risks. Covert actions can be exposed, raising scandal and hurting world standing.
 
@@ -553,7 +695,7 @@ func _show_help() -> void:
 
 [b]Defence pacts[/b] deter attacks on your friends, but if an ally is invaded you must decide whether your word means anything.
 
-[b]Next steps[/b]: the panel on the map (and at the top of the Oval Office) lists what your cabinet would do next. Click one to jump straight to it.
+[b]Needs your attention[/b]: the list under the diary, and the pins on the map, show what your cabinet would do next. Click one to jump straight to it.
 
 [b]Leader archetypes[/b] tilt the rules: the Idealist, Reformer, Warlord, Paranoid and Strongman each have a perk and a flaw.
 
@@ -973,7 +1115,13 @@ func _enter_game(_fresh: bool) -> void:
 	menu_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hud.visible = true
 	map.reset_view()
-	tabs.current_tab = 1
+	tabs.current_tab = TAB_DESK
+	_last_vals.clear()
+	_sweeping = false
+	wheel.close()
+	if tutorial_box != null:
+		tutorial_box.queue_free()
+		tutorial_box = null
 	_refresh()
 	Audio.music("situation")
 	if not _fresh:
@@ -981,21 +1129,20 @@ func _enter_game(_fresh: bool) -> void:
 
 
 func _run_tutorial() -> void:
-	var steps := [
-		{"target": null, "title": "Welcome, Mr. or Madam President", "text": "You run US foreign policy one month at a time. This short briefing shows you the desk. You can replay it from Settings."},
-		{"target": map, "title": "The world", "text": "Every country is simulated: economy, stability, hunger, freedom, military, and its feelings about you. Click a country to open its dossier. Scroll or pinch to zoom, drag to pan. Keys 1-6 change the map view."},
-		{"target": tabs, "title": "The dossier", "text": "The Country tab shows what we know (fuzzy if intelligence is weak), what you can do, and what each advisor recommends. Hover an action for its cost and odds."},
-		{"target": top_labels["approval"].get_parent().get_parent().get_parent(), "title": "Your standing", "text": "Approval decides elections. Political capital pays for actions. Congress votes on trade deals and the use of force. Scandal at 100 means impeachment hearings."},
-		{"target": null, "title": "Next steps", "text": "Not sure what to do? The Next Steps panel on the map lists what your cabinet would do next: budget fixes, mandate moves, friends in trouble. Click one and it takes you straight there, with the right option ringed."},
-		{"target": tabs, "title": "Your mandate", "text": "Every term brings three concrete goals, listed in the Oval Office tab. Meeting them pays out approval and political capital, and history remembers. Some options are ONGOING: air campaigns, aid programmes, invasions. They run every month until you stop them."},
-		{"target": end_button, "title": "End the month", "text": "When you are done, end the month (Enter). The world moves, crises arrive as briefing cards, and a newspaper tells you what happened."},
-		{"target": null, "title": "One last thing", "text": "Rival powers court countries with loans and arms. Wars break out. Advisors resign if ignored. Pick your battles. Good luck."},
-	]
-	var tut := Tutorial.new().setup(steps)
-	add_child(tut)
-	tut.finished.connect(func():
-		tut.queue_free()
-		_advance_flow())
+	tutorial_box = Tutorial.new()
+	tutorial_box.position = Vector2(14, 108)
+	(map.get_parent() as Control).add_child(tutorial_box)
+	var box := tutorial_box
+	box.finished.connect(func():
+		if is_instance_valid(box):
+			var tw := box.create_tween()
+			tw.tween_interval(1.2)
+			tw.tween_property(box, "modulate:a", 0.0, 0.4)
+			tw.tween_callback(box.queue_free)
+		if tutorial_box == box:
+			tutorial_box = null
+		show_toast("That is the whole desk. Good luck."))
+	_advance_flow()
 
 
 func _show_game_over() -> void:
@@ -1107,6 +1254,67 @@ func _dev_screenshot(spec: String) -> void:
 	Game.select(iso)
 	if view.begins_with("tab:"):
 		tabs.current_tab = int(view.trim_prefix("tab:"))
+	if view == "smoke":
+		# Drive the real interface for a few months: briefings, diary, ring, month sweep, newspaper.
+		Settings.values["month_sweep"] = true
+		_run_tutorial()
+		for m in int(parts[3]) if parts.size() > 3 and int(parts[3]) > 0 else 4:
+			for guard in 900:
+				await get_tree().process_frame
+				var busy := false
+				for c in overlay.get_children():
+					if c is BriefingCard:
+						busy = true
+						if c._done:
+							c.chosen.emit(c._picked)
+						elif not c._locked:
+							c._finish_reveal()
+							c._on_choice(0, null)
+					elif c is Digest:
+						busy = true
+						c._close()
+					elif c is MonthSweep or c is ElectionNight:
+						busy = true
+					elif c.has_method("smoke"):
+						busy = true
+						c.smoke()
+				if not busy and overlay.get_child_count() <= 0:
+					break
+			if Game.state.game_over:
+				break
+			for i in Diary.items(Game.state).size():
+				Game.attend(i)
+			Game.select(iso)
+			wheel.open(iso)
+			Game.do_action("envoy")
+			tabs.current_tab = (m % 6)
+			_end_month()
+		print("SMOKE OK: turn %d, %s, diary used %d" % [Game.state.turn, Game.state.date_string(), int(Game.state.stats.get("diary", 0))])
+		get_tree().quit()
+		return
+	if view == "result":
+		_advance_flow()
+		for i in 30:
+			await get_tree().process_frame
+		for c in overlay.get_children():
+			if c is BriefingCard:
+				c._finish_reveal()
+				c._on_choice(0, null)
+	if view == "wheel":
+		wheel.open(iso)
+		wheel._open_cat = "Diplomacy"
+		wheel._rebuild()
+	if view == "sweep":
+		Settings.values["month_sweep"] = true
+		while not Game.state.pending.is_empty():
+			Game.choose(0)
+		Game.state.us["political_capital"] = 100.0
+		for job in [["SOM", "op_aid"], ["TUR", "op_influence"]]:
+			if Actions.available(Game.state, job[0], job[1])["ok"]:
+				Actions.perform(Game.state, job[0], job[1], Game.map_data)
+		Game.attend(0)
+		Game.attend(1)
+		_end_month()
 	match view:
 		"card":
 			_advance_flow()
@@ -1150,10 +1358,10 @@ func _dev_screenshot(spec: String) -> void:
 			s.us["protests"] = 3
 			s.us["emergency_until"] = s.turn + 7
 			Game.state_changed.emit()
-			tabs.current_tab = 1
+			tabs.current_tab = TAB_OVAL
 			for i in 3:
 				await get_tree().process_frame
-			(tabs.get_child(1) as ScrollContainer).scroll_vertical = 640
+			(tabs.get_child(TAB_OVAL) as ScrollContainer).scroll_vertical = 640
 		"attempt":
 			Game.state.pending.clear()
 			Power._card(Game.state, "attempt", [{"label": "Address the nation calmly", "effects": []}, {"label": "Declare a national emergency", "effects": []}, {"label": "Double your security and say nothing", "effects": []}], "", "terror")
@@ -1173,6 +1381,10 @@ func _dev_screenshot(spec: String) -> void:
 	var wait := 40 if view != "election" else 400
 	if view == "fx":
 		wait = 6
+	if view == "sweep":
+		wait = 14
+	if view == "result":
+		wait = 60
 	for i in wait:
 		await get_tree().process_frame
 	await RenderingServer.frame_post_draw

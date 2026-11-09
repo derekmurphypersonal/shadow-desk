@@ -4,7 +4,7 @@
 
 **The world is on your desk.** Shadow Desk is a geopolitical strategy game in the spirit of the early-90s presidential world-power simulations. You run US foreign policy one month at a time: read your daily brief, weigh seven advisors who each want something different, and decide where to send envoys, aid, sanctions, spies or the Marines. Then the world answers.
 
-Version 1.4.0 · Godot 4.7 · macOS, Windows, Linux
+Version 1.5.0 · Godot 4.7 · macOS, Windows, Linux
 
 ## Features
 
@@ -19,7 +19,10 @@ Version 1.4.0 · Godot 4.7 · macOS, Windows, Linux
 - **Defence pacts and credibility.** Sign pacts with close friends. When one is attacked, honour it or watch every ally reconsider.
 - **UN Security Council votes** and multi-month story arcs that remember what you did.
 - **Presidential Library.** Every presidency is recorded, with 14 achievements to earn.
-- **Next Steps.** Never lost: your cabinet's suggested next moves, one click from doing them.
+- **The President's diary.** Every month brings five or six dated engagements (calls to leaders, state dinners, CIA deep-dives, lunches on the Hill, town halls) and time for three. They cost time, not political capital, and each resolves on the spot.
+- **See what you did.** Every briefing option shows what it costs and is likely to change; every decision ends with what it actually changed. At End month the month plays out day by day on the map.
+- **The map is the to-do list.** Pins mark what needs you. Click a country for a ring of the four option types, with your cabinet's pick in gold.
+- **Never lost.** The Desk tab lists your diary, what needs attention and everything you have running.
 - **Leader archetypes and the strongman path.** Play an Idealist, a Warlord, a Paranoid or a Strongman. Muzzle the press, pack the courts, rig the election, seize a third term, and live with the protests, impeachment drives, restless generals and assassins that follow.
 - **Five agendas, three difficulty levels, nine ways to end.** Win re-election, get impeached, lose your cabinet, or worse. History grades you at the end.
 
@@ -47,11 +50,12 @@ Opening the project in the Godot editor also works: Import, select `project.godo
 
 | Input | Does |
 | --- | --- |
-| Click a country | Open its dossier: stats, actions, cabinet advice |
+| Click a country | Open its action ring on the map and its dossier: stats, cabinet picks, options by type |
+| Click a pin | Jump to the country with the suggested option ready |
 | Double-click / scroll / pinch | Zoom |
 | Drag / two-finger scroll | Pan |
 | `1`–`6` | Map views: relations, stability, hunger, freedom, military, blocs |
-| `Enter` | End the month |
+| `Enter` | End the month (the month plays out on the map; click or press a key to skip) |
 | `Shift+Enter` | Skip ahead until something needs you (up to 6 months) |
 | `1`–`4` on a briefing | Pick an option; `Space` finishes the typewriter text |
 | `Esc` | Deselect, then pause menu |

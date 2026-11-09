@@ -72,6 +72,7 @@ func _try(s: GameState, iso: String, id: String, map_data: Dictionary) -> bool:
 func _act(s: GameState, bot: String, map_data: Dictionary) -> void:
 	if bot == "passive":
 		return
+	Diary.auto(s, map_data)
 	var isos := s.active_isos()
 	# Budget: balanced and diplomat nudge domestic spending up modestly.
 	if bot in ["balanced", "diplomat"] and s.turn == 0:

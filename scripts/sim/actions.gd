@@ -260,7 +260,7 @@ static func _expose(s: GameState, iso: String, pct: float, scandal: float, what:
 		s.c(iso)["relation"] = float(s.c(iso)["relation"]) - 25.0
 		Advisors.adjust(s, "state", -5)
 		Advisors.adjust(s, "un", -4)
-		s.add_log("EXPOSED: the press reports a US %s in %s. Scandal +%d." % [what, s.c(iso)["name"], int(scandal)], "scandal")
+		s.add_log("EXPOSED: the press reports a US %s in %s. Scandal +%d." % [what, s.c(iso)["name"], int(scandal)], "scandal", iso)
 		return true
 	return false
 
@@ -437,8 +437,9 @@ static func perform(s: GameState, iso: String, id: String, map_data: Dictionary)
 				msg = "Cyber operation against %s attributed to the US." % name
 	if id in ["fund_opposition", "coup", "cyber", "op_covert", "assassinate"]:
 		s.stats["covert"] = int(s.stats.get("covert", 0)) + 1
+	s.stats["actions"] = int(s.stats.get("actions", 0)) + 1
 	if msg != "":
-		s.add_log(msg, "action")
+		s.add_log(msg, "action", iso)
 		if not def.has("op"):
 			s.fx.append({"iso": iso, "kind": id, "text": def["label"]})
 	return msg

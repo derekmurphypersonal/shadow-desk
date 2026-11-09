@@ -6,6 +6,8 @@ signal selection_changed(iso: String)
 signal message(text: String)
 signal game_ended
 signal guidance_go(item: Dictionary)
+signal focus_country(iso: String)                  # select a country and centre the map on it
+signal action_done(iso: String, chips: Array)      # what an action or engagement changed, for the map and top bar
 
 const SAVE_DIR := "user://saves"
 
@@ -47,6 +49,11 @@ func select(iso: String) -> void:
 	selection_changed.emit(iso)
 
 
+func show_country(iso: String) -> void:
+	select(iso)
+	focus_country.emit(iso)
+
+
 func end_month() -> void:
 	if state == null or state.game_over:
 		return
@@ -83,11 +90,31 @@ func do_action(id: String) -> void:
 	if not check["ok"]:
 		message.emit(check["reason"])
 		return
+	var before := Report.snapshot(state, selected)
 	var msg := Actions.perform(state, selected, id, map_data)
+	var chips := Report.diff(state, before, Report.snapshot(state, selected), 4)
 	message.emit(msg)
+	action_done.emit(selected, chips)
 	state_changed.emit()
 	if state.game_over:
 		game_ended.emit()
+
+
+## Keep a diary engagement. Returns true if it happened.
+func attend(index: int) -> bool:
+	if state == null or state.game_over:
+		return false
+	var check := Diary.available(state, index)
+	if not check["ok"]:
+		message.emit(check["reason"])
+		return false
+	var iso := String(Diary.items(state)[index]["iso"])
+	var before := Report.snapshot(state, iso)
+	var msg := Diary.attend(state, index, map_data)
+	action_done.emit(iso, Report.diff(state, before, Report.snapshot(state, iso), 4))
+	message.emit(msg)
+	state_changed.emit()
+	return true
 
 
 func stop_op(iso: String, type: String) -> void:
@@ -211,6 +238,9 @@ func load_game(slot: String = "slot1") -> bool:
 	state = GameState.from_dict(d, map_data)
 	state.auto_minor = bool(Settings.get_value("cabinet_minor"))
 	events = ScenarioLoader.load_events(state.scenario["id"])
+	# Saves from before 1.5 have no diary: give this month one.
+	if not state.us.has("diary"):
+		Diary.roll(state, map_data)
 	selected = ""
 	state_changed.emit()
 	selection_changed.emit("")

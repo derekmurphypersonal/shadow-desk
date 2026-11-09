@@ -52,10 +52,10 @@ func refresh() -> void:
 		_list.add_child(UITheme.label("Nothing urgent. Pick a country and build on your mandate.", 12, UITheme.MUTED))
 		return
 	for it in items:
-		_list.add_child(_row(it))
+		_list.add_child(row(it, compact))
 
 
-func _row(it: Dictionary) -> Control:
+static func row(it: Dictionary, compact: bool) -> Control:
 	var card := PanelContainer.new()
 	var normal := UITheme.box(Color(1, 1, 1, 0.03), Color(1, 1, 1, 0.06), 6, 6)
 	var hover := UITheme.box(Color(UITheme.ACCENT, 0.12), Color(UITheme.ACCENT, 0.6), 6, 6)

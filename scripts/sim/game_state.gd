@@ -124,8 +124,12 @@ func cost_scale() -> float:
 	return float(scenario.get("cost_scale", 1.0))
 
 
-func add_log(text: String, kind: String = "info") -> void:
-	messages.append({"turn": turn, "date": date_string(), "text": text, "kind": kind})
+## kind: headline | war | scandal | cabinet | action | op | diary | info. iso pins the entry to a country
+## on the map. day is cosmetic (when in the month it happened), derived from the text so no dice are used.
+func add_log(text: String, kind: String = "info", iso: String = "", day: int = 0) -> void:
+	if day <= 0:
+		day = 2 + absi(("%s|%d|%d" % [text, turn, messages.size()]).hash()) % 26
+	messages.append({"turn": turn, "date": date_string(), "text": text, "kind": kind, "iso": iso, "day": day})
 	if messages.size() > 400:
 		messages = messages.slice(messages.size() - 400)
 
